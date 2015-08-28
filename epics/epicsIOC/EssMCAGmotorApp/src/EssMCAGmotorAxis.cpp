@@ -92,6 +92,7 @@ EssMCAGmotorAxis::EssMCAGmotorAxis(EssMCAGmotorController *pC, int axisNo,
       }
       if (!strncmp(pThisOption, encoder_is_str, strlen(encoder_is_str))) {
         pThisOption += strlen(encoder_is_str);
+        drvlocal.cfg.externalEncoderStr = strdup(pThisOption);
         setIntegerParam(pC->motorStatusHasEncoder_, 1);
       }
     }
@@ -452,7 +453,7 @@ asynStatus EssMCAGmotorAxis::poll(bool *moving)
   setIntegerParam(pC_->motorStatusPowerOn_, st_axis_status.status & STATUS_BIT_POWERON);
 
   /* Phase 2: read the Axis (readback) position */
-  comStatus = getFastValueFromAxis("FPOS", "MEASURE", &st_axis_status.motorPosition);
+  comStatus = getFastValueFromAxis("FPOS", "", &st_axis_status.motorPosition);
   if (comStatus) goto badpollall;
   /* Use previous motorPosition and current motorPosition to calculate direction.*/
   if (st_axis_status.motorPosition > drvlocal.lastpoll.motorPosition) {
@@ -462,7 +463,15 @@ asynStatus EssMCAGmotorAxis::poll(bool *moving)
   }
   drvlocal.lastpoll.motorPosition = st_axis_status.motorPosition;
   setDoubleParam(pC_->motorPosition_, st_axis_status.motorPosition);
- 
+
+  if (drvlocal.cfg.externalEncoderStr) {
+    int encPosition;
+    comStatus = getFastValueFromAxis("FPOS", drvlocal.cfg.externalEncoderStr, &encPosition);
+    if (!comStatus) setDoubleParam(pC_->motorEncoderPosition_, encPosition);
+  }
+
+
+  
   /* Phase 3: is motor moving */
   if (st_axis_status.status & (STATUS_BIT_MOVING | STATUS_BIT_SETTLING)) {
     nowMoving = 1;

@@ -41,6 +41,7 @@ private:
   struct {
     st_axis_status_type lastpoll;
     struct {
+      const char *externalEncoderStr;
       int axisFlags;
     } cfg;
   } drvlocal;

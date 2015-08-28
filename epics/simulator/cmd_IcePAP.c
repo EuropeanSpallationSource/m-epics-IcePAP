@@ -16,6 +16,7 @@
 typedef struct
 {
   double homevel;
+  int    velocity;
 } cmd_Motor_cmd_type;
 
 static cmd_Motor_cmd_type cmd_Motor_cmd[MAX_AXES];
@@ -29,7 +30,8 @@ static void init(void)
   }
   hw_motor_init();
   for (axis_no = 1; axis_no < MAX_AXES; axis_no++) {
-    setMotorParkingPosition(axis_no, 0); /* steps */
+    setMotorReverseERES(axis_no, 1.0);
+    setMotorParkingPosition(axis_no, 1); /* steps */
     setMaxHomeVelocityAbs(axis_no, 66);  /* 200 steps/sec in IcePAP */
     setLowHardLimitPos(axis_no, -1.0 * ReverseMRES);
     setHighHardLimitPos(axis_no, 173.0 * ReverseMRES);
@@ -37,7 +39,7 @@ static void init(void)
 }
 
 
-static int handle_IcePAP_cmd(const char *myarg_1)
+static int handle_IcePAP_cmd2(const char *myarg_1)
 {
   int motor_axis_no = 0;
   int nvals = 0;
@@ -116,6 +118,18 @@ static int handle_IcePAP_cmd3(const char *myarg_1, const char *myarg_2)
     myarg_1++;
   }
   (void)ret;
+  /* ?FPOS 1 */
+  if (0 == strcmp(myarg_1, "?FPOS")) {
+    nvals = sscanf(myarg_2, "%d", &motor_axis_no);
+    LOGINFO4("%s/%s:%d nvals=%d motor_axis_no=%d\n",
+             __FILE__, __FUNCTION__, __LINE__,
+             nvals, motor_axis_no);
+    if (nvals == 1) {
+      cmd_buf_printf("%s %d", myarg_1, (int)getEncoderPos(motor_axis_no));
+      return ICEPAP_SEND_NEWLINE;
+    }
+  }
+
   nvals = sscanf(myarg_1, "%d:", &motor_axis_no);
   if (nvals != 1) {
     return 0; /* Not IcePAP */
@@ -165,9 +179,19 @@ static int handle_IcePAP_cmd3(const char *myarg_1, const char *myarg_2)
       movePosition(motor_axis_no,
                    (double)value,
                    0, /* int relative, */
-                   1000.0, /* double max_velocity, */
+                   cmd_Motor_cmd[motor_axis_no].velocity,
                    1.0 /*double acceleration */ );
       return ret; /* MOVE does respond */
+    }
+  }
+  if (0 == strcmp(myarg_1, "VELOCITY")) {
+    nvals = sscanf(myarg_2, "%d", &value);
+    LOGINFO5("%s/%s:%d res=%d\n",
+             __FILE__, __FUNCTION__, __LINE__,
+             nvals);
+    if (nvals == 1) {
+      cmd_Motor_cmd[motor_axis_no].velocity = value;
+      return ret;
     }
   }
   /* #1:POWER ON */
@@ -304,7 +328,7 @@ int cmd_IcePAP(int argc, const char *argv[])
     LOGINFO5("%s/%s:%d argv[1]=%s\n",
              __FILE__, __FUNCTION__, __LINE__,
              argv[1]);
-    ret = handle_IcePAP_cmd(argv[1]);
+    ret = handle_IcePAP_cmd2(argv[1]);
   }
   switch (ret) {
     case ICEPAP_SEND_OK:

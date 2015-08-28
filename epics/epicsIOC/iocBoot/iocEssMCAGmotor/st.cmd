@@ -49,7 +49,7 @@ asynSetTraceInfoMask("MC_CPU1", -1, 15)
 #define AMPLIFIER_ON_FLAG_USING_CNEN   (1<<2)
 
 ##Encoder steps via Ethercat
-EssMCAGmotorCreateAxis("MCU1", "1", "2", "")
+EssMCAGmotorCreateAxis("MCU1", "1", "2", "encoder=MEASURE")
 
 #EssMCAGmotorCreateAxis("MCU1", "1", "6", "")
 ##EssMCAGmotorCreateAxis("MCU1", "2")
