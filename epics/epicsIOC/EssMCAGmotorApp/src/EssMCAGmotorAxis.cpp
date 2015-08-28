@@ -14,6 +14,48 @@ FILENAME... EssMCAGmotorAxis.cpp
 #define ASYN_TRACE_INFO      0x0040
 #endif
 
+/* Page 21 */
+#define STATUS_BIT_0         (1<<0)
+#define STATUS_BIT_1         (1<<1)
+#define STATUS_BIT_2         (1<<2)
+#define STATUS_BIT_3         (1<<3)
+
+#define STATUS_BITS_DISABLE   ((1<<4) || (1<<5) || (1<<6))
+
+#define STATUS_BIT_7         (1<<7)
+#define STATUS_BIT_8         (1<<8)
+#define STATUS_BIT_READY     (1<<9)
+#define STATUS_BIT_MOVING    (1<<10)
+#define STATUS_BIT_SETTLING  (1<<11)
+#define STATUS_BIT_12        (1<<12)
+#define STATUS_BIT_13        (1<<13)
+#define STATUS_BIT_14        (1<<14)
+#define STATUS_BIT_15        (1<<15)
+#define STATUS_BIT_16        (1<<16)
+#define STATUS_BIT_17        (1<<17)
+#define STATUS_BIT_LIMIT_POS (1<<18)
+#define STATUS_BIT_LIMIT_NEG (1<<19)
+#define STATUS_BIT_HSIGNAL   (1<<20)
+#define STATUS_BIT_POWERON   (1<<23)
+#define STATUS_BIT_14        (1<<14)
+#define STATUS_BIT_15        (1<<15)
+#define STATUS_BIT_16        (1<<16)
+#define STATUS_BIT_17        (1<<17)
+#define STATUS_BIT_18        (1<<14)
+#define STATUS_BIT_19        (1<<15)
+#define STATUS_BIT_20        (1<<20)
+#define STATUS_BIT_21        (1<<21)
+#define STATUS_BIT_22        (1<<22)
+#define STATUS_BIT_23        (1<<23)
+#define STATUS_BIT_24        (1<<24)
+#define STATUS_BIT_25        (1<<25)
+#define STATUS_BIT_26        (1<<26)
+#define STATUS_BIT_27        (1<<27)
+#define STATUS_BIT_28        (1<<28)
+#define STATUS_BIT_29        (1<<29)
+#define STATUS_BIT_30        (1<<30)
+#define STATUS_BIT_31        (1<<31)
+
 //
 // These are the EssMCAGmotorAxis methods
 //
@@ -31,8 +73,7 @@ EssMCAGmotorAxis::EssMCAGmotorAxis(EssMCAGmotorController *pC, int axisNo,
     pC_(pC)
 {
   memset(&drvlocal, 0, sizeof(drvlocal));
-  memset(&drvlocal.dirty, 0xFF, sizeof(drvlocal.dirty));
-  drvlocal.axisFlags = axisFlags;
+  drvlocal.cfg.axisFlags = axisFlags;
   if (axisFlags & AMPLIFIER_ON_FLAG_USING_CNEN) {
     setIntegerParam(pC->motorStatusGainSupport_, 1);
   }
@@ -51,7 +92,6 @@ EssMCAGmotorAxis::EssMCAGmotorAxis(EssMCAGmotorController *pC, int axisNo,
       }
       if (!strncmp(pThisOption, encoder_is_str, strlen(encoder_is_str))) {
         pThisOption += strlen(encoder_is_str);
-        drvlocal.externalEncoderStr = strdup(pThisOption);
         setIntegerParam(pC->motorStatusHasEncoder_, 1);
       }
     }
@@ -90,19 +130,14 @@ void EssMCAGmotorAxis::handleStatusChange(asynStatus newStatus)
   asynPrint(pC_->pasynUserController_, ASYN_TRACE_ERROR|ASYN_TRACEIO_DRIVER,
             "EssMCAGmotorAxis::handleStatusChange status=%s (%d)\n",
             pasynManager->strStatus(newStatus), (int)newStatus);
-  if (newStatus != asynSuccess) {
-    memset(&drvlocal.dirty, 0xFF, sizeof(drvlocal.dirty));
-  } else {
-    asynStatus status = asynSuccess;
-    if (drvlocal.axisFlags & AMPLIFIER_ON_FLAG_CREATE_AXIS) {
+  if (newStatus == asynSuccess) {
+    if (drvlocal.cfg.axisFlags & AMPLIFIER_ON_FLAG_CREATE_AXIS) {
 	/* Enable the amplifier when the axis is created,
 	   but wait until we have a connection to the controller.
 	   After we lost the connection, Re-enable the amplifier
 	   See AMPLIFIER_ON_FLAG */
-      status = enableAmplifier(1);
+      enableAmplifier(1);
     }
-    /*  Enable "Target Position Monitoring" */
-    if (status == asynSuccess) status = setValueOnAxis(501, 0x4000, 0x15, 1);
   }
 }
 
@@ -137,7 +172,7 @@ asynStatus EssMCAGmotorAxis::writeReadACK(void)
     case asynError:
       return status;
     case asynSuccess:
-      if (strcmp(pC_->inString_, "OK")) {
+      if (!strstr(pC_->inString_, "OK")) {
         status = asynError;
         asynPrint(pC_->pasynUserController_, ASYN_TRACE_ERROR|ASYN_TRACEIO_DRIVER,
                   "out=%s in=%s return=%s (%d)\n",
@@ -149,10 +184,10 @@ asynStatus EssMCAGmotorAxis::writeReadACK(void)
       break;
   }
   asynPrint(pC_->pasynUserController_, ASYN_TRACE_INFO,
-            "out=%s in=%s status=%s (%d) oldPosition=%f\n",
+            "out=%s in=%s status=%s (%d) oldPosition=%d\n",
             pC_->outString_, pC_->inString_,
             pasynManager->strStatus(status), (int)status,
-            drvlocal.oldPosition);
+            drvlocal.lastpoll.motorPosition);
   return status;
 }
 
@@ -163,43 +198,63 @@ asynStatus EssMCAGmotorAxis::writeReadACK(void)
   * \param[in] value the (integer) variable to be updated
   *
   */
-asynStatus EssMCAGmotorAxis::setValueOnAxis(const char* var, int value)
+asynStatus EssMCAGmotorAxis::setValueOnAxis(const char* var)
 {
-  sprintf(pC_->outString_, "Main.M%d.%s=%d", axisNo_, var, value);
+  sprintf(pC_->outString_, "#%d:%s", axisNo_, var);
   return writeReadACK();
 }
 
-
-/** Sets a floating point value on an axis
+/** Sets an integer or boolean value on an axis
   * the values in the controller must be updated
   * \param[in] name of the variable to be updated
-  * \param[in] value the (floating point) variable to be updated
+  * \param[in] value the (integer) variable to be updated
   *
   */
-asynStatus EssMCAGmotorAxis::setValueOnAxis(const char* var, double value)
+asynStatus EssMCAGmotorAxis::setValueOnAxis(const char* var, const char *value)
 {
-  sprintf(pC_->outString_, "Main.M%d.%s=%f", axisNo_, var, value);
+  sprintf(pC_->outString_, "#%d:%s %s", axisNo_, var, value);
   return writeReadACK();
 }
 
-asynStatus EssMCAGmotorAxis::setValueOnAxis(unsigned adsport,
-					    unsigned group_no,
-					    unsigned offset_in_group,
-					    int value)
+/** Sets an integer or boolean value on an axis
+  * the values in the controller must be updated
+  * \param[in] name of the variable to be updated
+  * \param[in] value the (integer) variable to be updated
+  *
+  */
+asynStatus EssMCAGmotorAxis::setValueOnAxis(const char* var, int value)
 {
-  sprintf(pC_->outString_, "ADSPORT=%u/.ADR.16#%X,16#%X,2,2=%d",
-	  adsport, group_no + axisNo_, offset_in_group, value);
+  sprintf(pC_->outString_, "#%d:%s %d", axisNo_, var, value);
   return writeReadACK();
 }
 
-asynStatus EssMCAGmotorAxis::setValueOnAxis(unsigned adsport,
-					    unsigned group_no,
-					    unsigned offset_in_group,
-					    double value)
+/** Gets a stringfrom an axis
+  * \param[in] name of the variable to be retrieved
+  * \param[in] pointer to the string result
+  *
+  */
+asynStatus EssMCAGmotorAxis::getValueFromAxis(const char* var,
+                                              unsigned len, char *value)
 {
-  sprintf(pC_->outString_, "ADSPORT=%u/.ADR.16#%X,16#%X,8,5=%f",
-	  adsport, group_no + axisNo_, offset_in_group, value);
-  return writeReadACK();
+  char format_string[128];
+  asynStatus comStatus;
+
+  memset(value, 0, len);
+  sprintf(pC_->outString_, "%d:?%s", axisNo_, var);
+  sprintf(format_string, "%d:?%s %%%uc", axisNo_, var, len-1);
+  comStatus = pC_->writeReadOnErrorDisconnect();
+  if (comStatus) {
+    return comStatus;
+  } else {
+    int nvals = sscanf(pC_->inString_, format_string, value);
+    if (nvals != 1) {
+      asynPrint(pC_->pasynUserController_, ASYN_TRACE_ERROR|ASYN_TRACEIO_DRIVER,
+                "nvals=%d format_string=\"%s\" command=\"%s\" response=\"%s\"\n",
+                nvals, format_string, pC_->outString_, pC_->inString_);
+      return asynError;
+    }
+  }
+  return asynSuccess;
 }
 
 /** Gets an integer or boolean value from an axis
@@ -209,29 +264,23 @@ asynStatus EssMCAGmotorAxis::setValueOnAxis(unsigned adsport,
   */
 asynStatus EssMCAGmotorAxis::getValueFromAxis(const char* var, int *value)
 {
+  char format_string[100];
   asynStatus comStatus;
   int res;
-  sprintf(pC_->outString_, "Main.M%d.%s?", axisNo_, var);
+
+  sprintf(pC_->outString_, "%d:?%s", axisNo_, var);
+  sprintf(format_string, "%d:?%s %%d", axisNo_, var);
   comStatus = pC_->writeReadOnErrorDisconnect();
-  if (comStatus)
+  if (comStatus) {
     return comStatus;
-  if (var[0] == 'b') {
-    if (!strcmp(pC_->inString_, "0")) {
-      res = 0;
-    } else if (!strcmp(pC_->inString_, "1")) {
-      res = 1;
-    } else {
-      asynPrint(pC_->pasynUserController_, ASYN_TRACE_ERROR|ASYN_TRACEIO_DRIVER,
-                "command=\"%s\" response=\"%s\"\n",
-                pC_->outString_, pC_->inString_);
-      return asynError;
-    }
   } else {
-    int nvals = sscanf(pC_->inString_, "%d", &res);
+    int nvals = sscanf(pC_->inString_, format_string, &res);
+    if (nvals != 1) {
+    }
     if (nvals != 1) {
       asynPrint(pC_->pasynUserController_, ASYN_TRACE_ERROR|ASYN_TRACEIO_DRIVER,
-                "nvals=%d command=\"%s\" response=\"%s\"\n",
-                nvals, pC_->outString_, pC_->inString_);
+                "nvals=%d format_string=\"%s\" command=\"%s\" response=\"%s\"\n",
+                nvals, format_string, pC_->outString_, pC_->inString_);
       return asynError;
     }
   }
@@ -239,71 +288,35 @@ asynStatus EssMCAGmotorAxis::getValueFromAxis(const char* var, int *value)
   return asynSuccess;
 }
 
-
-/** Gets a floating point value from an axis
+/** Gets an integer or boolean value from an axis
   * \param[in] name of the variable to be retrieved
-  * \param[in] pointer to the double result
+  * \param[in] pointer to the integer result
   *
   */
-asynStatus EssMCAGmotorAxis::getValueFromAxis(const char* var, double *value)
+asynStatus EssMCAGmotorAxis::getFastValueFromAxis(const char* var, const char *extra, int *value)
 {
+  char format_string[100];
   asynStatus comStatus;
-  int nvals;
-  double res;
-  sprintf(pC_->outString_, "Main.M%d.%s?", axisNo_, var);
+  int res;
+
+  sprintf(pC_->outString_, "?%s %s %d", var, extra, axisNo_);
+  sprintf(format_string, "?%s %%d", var);
   comStatus = pC_->writeReadOnErrorDisconnect();
-  if (comStatus)
+  if (comStatus) {
     return comStatus;
-  nvals = sscanf(pC_->inString_, "%lf", &res);
-  if (nvals != 1) {
-    asynPrint(pC_->pasynUserController_, ASYN_TRACE_ERROR|ASYN_TRACEIO_DRIVER,
-              "nvals=%d command=\"%s\" response=\"%s\"\n",
-              nvals, pC_->outString_, pC_->inString_);
-    return asynError;
+  } else {
+    int nvals = sscanf(pC_->inString_, format_string, &res);
+    if (nvals != 1) {
+    }
+    if (nvals != 1) {
+      asynPrint(pC_->pasynUserController_, ASYN_TRACE_ERROR|ASYN_TRACEIO_DRIVER,
+                "nvals=%d format_string=\"%s\" command=\"%s\" response=\"%s\"\n",
+                nvals, format_string, pC_->outString_, pC_->inString_);
+      return asynError;
+    }
   }
   *value = res;
   return asynSuccess;
-}
-
-asynStatus EssMCAGmotorAxis::getValueFromController(const char* var, double *value)
-{
-  asynStatus comStatus;
-  int nvals;
-  double res;
-  sprintf(pC_->outString_, "%s?", var);
-  comStatus = pC_->writeReadOnErrorDisconnect();
-  if (comStatus)
-    return comStatus;
-  nvals = sscanf(pC_->inString_, "%lf", &res);
-  if (nvals != 1) {
-    asynPrint(pC_->pasynUserController_, ASYN_TRACE_ERROR|ASYN_TRACEIO_DRIVER,
-              "nvals=%d command=\"%s\" response=\"%s\"\n",
-              nvals, pC_->outString_, pC_->inString_);
-    return asynError;
-  }
-  *value = res;
-  return asynSuccess;
-}
-
-/** Set velocity and acceleration for the axis
-  * \param[in] maxVelocity, mm/sec
-  * \param[in] acceleration, seconds to maximum velocity
-  *
-  */
-asynStatus EssMCAGmotorAxis::sendVelocityAndAccelExecute(double maxVelocity, double acceleration)
-{
-  asynStatus status;
-  /* We don't use minVelocity */
-  status = setValueOnAxis("fVelocity", maxVelocity);
-  /* We don't send acceleration yet:
-     in the motorRecord acceleration is defined "as time in seconds to reach maxVelocity",
-     the motion controllers use "mm/sec2" or so.
-     Until we have the proper re-calculation, we use the default acceleration
-     configured in the  motion controller
-  */
-  if (status == asynSuccess) status = setValueOnAxis("bExecute", 1);
-  drvlocal.waitNumPollsBeforeReady += 2;
-  return status;
 }
 
 /** Move the axis to a position, either absolute or relative
@@ -319,10 +332,8 @@ asynStatus EssMCAGmotorAxis::move(double position, int relative, double minVeloc
   asynStatus status = asynSuccess;
 
   if (status == asynSuccess) status = stopAxisInternal(__FUNCTION__, 0);
-  if (status == asynSuccess) status = updateSoftLimitsIfDirty(__LINE__);
-  if (status == asynSuccess) status = setValueOnAxis("nCommand", relative ? 2 : 3);
-  if (status == asynSuccess) status = setValueOnAxis("fPosition", position);
-  if (status == asynSuccess) status = sendVelocityAndAccelExecute(maxVelocity, acceleration);
+  if (status == asynSuccess) status = setValueOnAxis("VELOCITY", (int)maxVelocity);
+  if (status == asynSuccess) status = setValueOnAxis(relative ? "RMOVE" : "MOVE", (int)position);
 
   return status;
 }
@@ -342,14 +353,9 @@ asynStatus EssMCAGmotorAxis::home(double minVelocity, double maxVelocity, double
   /* The controller will do the home search, and change its internal
      raw value to what we specified in fPosition. Use 0 */
   if (status == asynSuccess) status = stopAxisInternal(__FUNCTION__, 0);
-  if (status == asynSuccess) status = updateSoftLimitsIfDirty(__LINE__);
-  if ((drvlocal.axisFlags & AMPLIFIER_ON_FLAG_WHEN_HOMING) &&
+  if ((drvlocal.cfg.axisFlags & AMPLIFIER_ON_FLAG_WHEN_HOMING) &&
       (status == asynSuccess)) status = enableAmplifier(1);
-  if (status == asynSuccess) status = setValueOnAxis("fPosition", 0);
-  if (status == asynSuccess) status = setValueOnAxis("nCommand", 10);
-  if (status == asynSuccess) status = setValueOnAxis("nCmdData", 0);
-  if (status == asynSuccess) status = sendVelocityAndAccelExecute(maxVelocity, acceleration);
-
+  if (status == asynSuccess) status = setValueOnAxis("HOME", -1);
   return status;
 }
 
@@ -363,72 +369,8 @@ asynStatus EssMCAGmotorAxis::home(double minVelocity, double maxVelocity, double
 asynStatus EssMCAGmotorAxis::moveVelocity(double minVelocity, double maxVelocity, double acceleration)
 {
   asynStatus status = asynSuccess;
-
-  if (status == asynSuccess) status = stopAxisInternal(__FUNCTION__, 0);
-  if (status == asynSuccess) status = updateSoftLimitsIfDirty(__LINE__);
-  if (status == asynSuccess) setValueOnAxis("nCommand", 1);
-  if (status == asynSuccess) status = sendVelocityAndAccelExecute(maxVelocity, acceleration);
-
+  if (status == asynSuccess) setValueOnAxis("JOG", (int)maxVelocity);
   return status;
-}
-
-
-/** Set the high soft-limit on an axis
-  *
-  */
-asynStatus EssMCAGmotorAxis::setMotorHighLimitOnAxis(void)
-{
-  asynStatus status = asynSuccess;
-  int enable = drvlocal.defined.motorHighLimit;
-  if (drvlocal.motorHighLimit <= drvlocal.motorLowLimit) enable = 0;
-  if (enable && (status == asynSuccess)) {
-    status = setValueOnAxis(501, 0x5000, 0xE, drvlocal.motorHighLimit);
-  }
-  if (status == asynSuccess) status = setValueOnAxis(501, 0x5000, 0xC, enable);
-  return status;
-}
-
-
-/** Set the low soft-limit on an axis
-  *
-  */
-asynStatus EssMCAGmotorAxis::setMotorLowLimitOnAxis(void)
-{
-  asynStatus status = asynSuccess;
-  int enable = drvlocal.defined.motorLowLimit;
-  if (drvlocal.motorHighLimit <= drvlocal.motorLowLimit) enable = 0;
-  if (enable && (status == asynSuccess)) {
-    status = setValueOnAxis(501, 0x5000, 0xD, drvlocal.motorLowLimit);
-  }
-  if (status == asynSuccess) status = setValueOnAxis(501, 0x5000, 0xB, enable);
-  return status;
-}
-
-/** Set the low soft-limit on an axis
-  *
-  */
-asynStatus EssMCAGmotorAxis::setMotorLimitsOnAxis(void)
-{
-  asynStatus status = asynError;
-  asynPrint(pC_->pasynUserController_, ASYN_TRACEIO_DRIVER, "\n");
-  if (setMotorHighLimitOnAxis() == asynSuccess &&
-      setMotorLowLimitOnAxis() == asynSuccess) {
-    status = asynSuccess;
-  }
-  drvlocal.dirty.motorLimits =  (status != asynSuccess);
-  return status;
-}
-
-
-/** Update the soft limits in the controller, if needed
-  *
-  */
-asynStatus EssMCAGmotorAxis::updateSoftLimitsIfDirty(int line)
-{
-  asynPrint(pC_->pasynUserController_, ASYN_TRACEIO_DRIVER,
-            "called from %d\n",line);
-  if (drvlocal.dirty.motorLimits) return setMotorLimitsOnAxis();
-  return asynSuccess;
 }
 
 
@@ -437,26 +379,7 @@ asynStatus EssMCAGmotorAxis::updateSoftLimitsIfDirty(int line)
   */
 asynStatus EssMCAGmotorAxis::enableAmplifier(int on)
 {
-  asynStatus status = asynSuccess;
-  unsigned int counter = 0;
-  on = on ? 1 : 0; /* Normalize 0/1 */
-  if (drvlocal.dirty.bEnabled) status = getValueFromAxis("bEnabled", &drvlocal.bEnabled);
-  while ((drvlocal.bEnabled != on) && counter < 100) {
-    status = setValueOnAxis("bEnable", on); /* Enable/Disable the amplifier */
-    if (status) break;
-    status = getValueFromAxis("bEnabled", &drvlocal.bEnabled);
-    if (status) break;
-    counter++;
-    epicsThreadSleep(.2);
-  }
-  asynPrint(pC_->pasynUserController_, ASYN_TRACE_INFO,
-	    "enableAmplifier(%d) on=%d status=%s (%d) bEnabled=%d counter=%d\n",
-	    axisNo_,
-	    on,
-	    pasynManager->strStatus(status), status,
-	    drvlocal.bEnabled, counter);
-  if (status == asynSuccess) drvlocal.dirty.bEnabled = 0;
-  return status;
+  return setValueOnAxis("POWER", on ? "ON" : "OFF");
 }
 
 /** Stop the axis
@@ -464,13 +387,10 @@ asynStatus EssMCAGmotorAxis::enableAmplifier(int on)
   */
 asynStatus EssMCAGmotorAxis::stopAxisInternal(const char *function_name, double acceleration)
 {
-  asynStatus status = setValueOnAxis("bExecute", 0); /* Stop executing */
+  asynStatus status = setValueOnAxis("STOP"); /* Page 127 */
   if (status == asynSuccess) {
     asynPrint(pC_->pasynUserController_, ASYN_TRACE_INFO,
 	      "stopAxisInternal(%d) (%s)\n",  axisNo_, function_name);
-    drvlocal.dirty.mustStop = 0;
-  } else {
-    drvlocal.dirty.mustStop = 1;
   }
   return status;
 }
@@ -484,153 +404,99 @@ asynStatus EssMCAGmotorAxis::stop(double acceleration )
 }
 
 
-
-asynStatus EssMCAGmotorAxis::pollAll(bool *moving, st_axis_status_type *pst_axis_status)
-{
-  asynStatus comStatus;
-
-  int motor_axis_no = 0;
-  int nvals;
-
-  /* Read the complete Axis status */
-  sprintf(pC_->outString_, "Main.M%d.stAxisStatus?", axisNo_);
-  comStatus = pC_->writeReadController();
-  if (comStatus) return comStatus;
-  drvlocal.dirty.stAxisStatus_V00 = 0;
-  nvals = sscanf(pC_->inString_,
-		 "Main.M%d.stAxisStatus="
-		 "%d,%d,%d,%u,%u,%lf,%lf,%lf,%lf,%d,"
-		 "%d,%d,%d,%lf,%d,%d,%d,%u,%lf,%lf,%lf,%d,%d",
-		 &motor_axis_no,
-		 &pst_axis_status->bEnable,        /*  1 */
-		 &pst_axis_status->bReset,         /*  2 */
-		 &pst_axis_status->bExecute,       /*  3 */
-		 &pst_axis_status->nCommand,       /*  4 */
-		 &pst_axis_status->nCmdData,       /*  5 */
-		 &pst_axis_status->fVelocity,      /*  6 */
-		 &pst_axis_status->fPosition,      /*  7 */
-		 &pst_axis_status->fAcceleration,  /*  8 */
-		 &pst_axis_status->fDecceleration, /*  9 */
-		 &pst_axis_status->bJogFwd,        /* 10 */
-		 &pst_axis_status->bJogBwd,        /* 11 */
-		 &pst_axis_status->bLimitFwd,      /* 12 */
-		 &pst_axis_status->bLimitBwd,      /* 13 */
-		 &pst_axis_status->fOverride,      /* 14 */
-		 &pst_axis_status->bHomeSensor,    /* 15 */
-		 &pst_axis_status->bEnabled,       /* 16 */
-		 &pst_axis_status->bError,         /* 17 */
-		 &pst_axis_status->nErrorId,       /* 18 */
-		 &pst_axis_status->fActVelocity,   /* 19 */
-		 &pst_axis_status->fActPosition,   /* 20 */
-		 &pst_axis_status->fActDiff,       /* 21 */
-		 &pst_axis_status->bHomed,         /* 22 */
-		 &pst_axis_status->bBusy           /* 23 */);
-
-  if (nvals == 24) {
-    if (axisNo_ != motor_axis_no) return asynError;
-    drvlocal.supported.stAxisStatus_V00 = 1;
-    return asynSuccess;
-  }
-  asynPrint(pC_->pasynUserController_, ASYN_TRACE_INFO,
-	    "poll(%d) line=%d nvals=%d\n",
-	    axisNo_, __LINE__, nvals);
-  drvlocal.supported.stAxisStatus_V00 = 0;
-  return asynError;
-}
-
-
 /** Polls the axis.
   * This function reads the motor position, the limit status, the home status, the moving status,
   * and the drive power-on status.
-  * It calls setIntegerParam() and setDoubleParam() for each item that it polls,
   * and then calls callParamCallbacks() at the end.
   * \param[out] moving A flag that is set indicating that the axis is moving (true) or done (false). */
 asynStatus EssMCAGmotorAxis::poll(bool *moving)
 {
+  st_axis_status_type st_axis_status;
   asynStatus comStatus;
   int nowMoving = 0;
-  st_axis_status_type st_axis_status;
-
+  int nvals = 10110;
+  int motor_axis_no = 0;
+  
+  *pC_->outString_ = '\0';
+  *pC_->inString_ = '\0';
   memset(&st_axis_status, 0, sizeof(st_axis_status));
-  /* Stop if the previous stop had been lost */
-  if (drvlocal.dirty.mustStop) {
-    comStatus = stopAxisInternal(__FUNCTION__, 0);
-    if (comStatus) goto skip;
-  }
-  /* Check if we are reconnected */
-  if (drvlocal.oldMotorStatusProblem) handleStatusChange(asynSuccess);
 
-  if (drvlocal.supported.stAxisStatus_V00 || drvlocal.dirty.stAxisStatus_V00) {
-    comStatus = pollAll(moving, &st_axis_status);
-  } else {
-    comStatus = asynError;
+  /* Phase 1: read the Axis status */
+  sprintf(pC_->outString_, "%d:?STATUS", axisNo_);
+  comStatus = pC_->writeReadController();
+  if (comStatus) goto badpollall;
+  nvals = sscanf(pC_->inString_,
+		 "%d:?STATUS %x",
+		 &motor_axis_no,
+		 &st_axis_status.status);
+  if (nvals != 2) goto badpollall;
+  if (axisNo_ != motor_axis_no) goto badpollall;
+  if (drvlocal.lastpoll.status != st_axis_status.status) {
+    unsigned int status = st_axis_status.status;
+    asynPrint(pC_->pasynUserController_, ASYN_TRACE_INFO,
+              "poll(%d) line=%d status=0x%x %s%s%s%s%s%s%s\n",
+              axisNo_, __LINE__, st_axis_status.status,
+              status & STATUS_BIT_READY ?     "READY " : "      ",
+              status & STATUS_BIT_MOVING ?    "MOVIN " : "      ",
+              status & STATUS_BIT_SETTLING ?  "SETTL " : "      ",
+              status & STATUS_BIT_POWERON ?   "PWR-ON  " : "PWR-OFF ",
+              status & STATUS_BIT_LIMIT_POS ? "LIM-P " : " ",
+              status & STATUS_BIT_LIMIT_NEG ? "LIM-N " : " ",
+              status & STATUS_BIT_HSIGNAL ?   "HOME  " : " ");
+    drvlocal.lastpoll.status = st_axis_status.status;
   }
-  if (comStatus) {
-    asynPrint(pC_->pasynUserController_, ASYN_TRACE_ERROR|ASYN_TRACEIO_DRIVER,
-              "out=%s in=%s return=%s (%d)\n",
-              pC_->outString_, pC_->inString_,
-              pasynManager->strStatus(comStatus), (int)comStatus);
-    goto skip;
-  }
-  drvlocal.bEnabled = st_axis_status.bEnabled;
+  setIntegerParam(pC_->motorStatusProblem_, 0); //st_axis_status.status & STATUS_BITS_DISABLE);
+  setIntegerParam(pC_->motorStatusAtHome_, st_axis_status.status & STATUS_BIT_HSIGNAL);
+  setIntegerParam(pC_->motorStatusLowLimit_, st_axis_status.status & STATUS_BIT_LIMIT_NEG);
+  setIntegerParam(pC_->motorStatusHighLimit_, st_axis_status.status & STATUS_BIT_LIMIT_POS);
+  setIntegerParam(pC_->motorStatusPowerOn_, st_axis_status.status & STATUS_BIT_POWERON);
 
-  setIntegerParam(pC_->motorStatusHomed_, st_axis_status.bHomed);
-  setIntegerParam(pC_->motorStatusProblem_, st_axis_status.bError);
-  setIntegerParam(pC_->motorStatusAtHome_, st_axis_status.bHomeSensor);
-  setIntegerParam(pC_->motorStatusLowLimit_, !st_axis_status.bLimitBwd);
-  setIntegerParam(pC_->motorStatusHighLimit_, !st_axis_status.bLimitFwd);
-  setIntegerParam(pC_->motorStatusPowerOn_, st_axis_status.bEnabled);
-
-  /* Use previous fActPosition and current fActPosition to calculate direction.*/
-  if (st_axis_status.fActPosition > drvlocal.oldPosition) {
+  /* Phase 2: read the Axis (readback) position */
+  comStatus = getFastValueFromAxis("FPOS", "MEASURE", &st_axis_status.motorPosition);
+  if (comStatus) goto badpollall;
+  /* Use previous motorPosition and current motorPosition to calculate direction.*/
+  if (st_axis_status.motorPosition > drvlocal.lastpoll.motorPosition) {
     setIntegerParam(pC_->motorStatusDirection_, 1);
-  } else if (st_axis_status.fActPosition < drvlocal.oldPosition) {
+  } else if (st_axis_status.motorPosition < drvlocal.lastpoll.motorPosition) {
     setIntegerParam(pC_->motorStatusDirection_, 0);
   }
-  drvlocal.oldPosition = st_axis_status.fActPosition;
-  setDoubleParam(pC_->motorPosition_, st_axis_status.fActPosition);
-  if (drvlocal.externalEncoderStr) {
-    double fEncPosition;
-    comStatus = getValueFromController(drvlocal.externalEncoderStr, &fEncPosition);
-    if (!comStatus) setDoubleParam(pC_->motorEncoderPosition_, fEncPosition);
+  drvlocal.lastpoll.motorPosition = st_axis_status.motorPosition;
+  setDoubleParam(pC_->motorPosition_, st_axis_status.motorPosition);
+ 
+  /* Phase 3: is motor moving */
+  if (st_axis_status.status & (STATUS_BIT_MOVING | STATUS_BIT_SETTLING)) {
+    nowMoving = 1;
   }
 
-  nowMoving = st_axis_status.bBusy && st_axis_status.bExecute && st_axis_status.bEnabled;
-  if (drvlocal.waitNumPollsBeforeReady) {
-    drvlocal.waitNumPollsBeforeReady--;
-    *moving = true;
-  } else {
-    setIntegerParam(pC_->motorStatusMoving_, nowMoving);
-    setIntegerParam(pC_->motorStatusDone_, !nowMoving);
-    *moving = nowMoving ? true : false;
-  }
-  if (drvlocal.oldNowMoving != nowMoving) {
-    asynPrint(pC_->pasynUserController_, ASYN_TRACE_INFO,
-              "poll(%d) nowMoving=%d bBusy=%d bExecute=%d fActPosition=%f\n",
-              axisNo_, nowMoving,
-	      st_axis_status.bBusy, st_axis_status.bExecute, st_axis_status.fActPosition);
-    drvlocal.oldNowMoving = nowMoving;
+  setIntegerParam(pC_->motorStatusMoving_, nowMoving);
+  setIntegerParam(pC_->motorStatusDone_, !nowMoving);
+  *moving = nowMoving ? true : false;
+
+  /* Phase 4: Is the axis homed */
+  {
+    const char *found_str = "FOUND";
+    int homed = 0;
+    char homeencbuf[128];
+    asynStatus comStatus;
+
+    comStatus = getValueFromAxis("HOMESTAT", (int)sizeof(homeencbuf), &homeencbuf[0]);
+    if (!comStatus) {
+      if (!strncmp(homeencbuf, found_str, strlen(found_str))) {
+        homed = 1;
+      } 
+    }
+    setIntegerParam(pC_->motorStatusHomed_, homed);
   }
 
-  if (drvlocal.dirty.reportDisconnect) goto skip;
-
-  if (drvlocal.oldMotorStatusProblem) {
-    asynPrint(pC_->pasynUserController_, ASYN_TRACE_ERROR|ASYN_TRACEIO_DRIVER,
-              "reconnected\n");
-    drvlocal.oldMotorStatusProblem = 0;
-  }
-  //setIntegerParam(pC_->motorStatusProblem_, 0);
   callParamCallbacks();
   return asynSuccess;
 
-skip:
-  memset(&drvlocal.dirty, 0xFF, sizeof(drvlocal.dirty));
-  if (!drvlocal.oldMotorStatusProblem) {
-    asynPrint(pC_->pasynUserController_, ASYN_TRACE_ERROR|ASYN_TRACEIO_DRIVER,
-              "Communication error\n");
-  }
-  drvlocal.dirty.reportDisconnect = 0;
-  drvlocal.oldMotorStatusProblem = 1;
+badpollall:
+  asynPrint(pC_->pasynUserController_, ASYN_TRACE_ERROR|ASYN_TRACEIO_DRIVER,
+            "out=%s in=%s return=%s (%d)\n",
+            pC_->outString_, pC_->inString_,
+            pasynManager->strStatus(comStatus), (int)comStatus);
+
   setIntegerParam(pC_->motorStatusProblem_, 1);
   callParamCallbacks();
   return asynError;
@@ -640,7 +506,7 @@ asynStatus EssMCAGmotorAxis::setIntegerParam(int function, int value)
 {
   asynStatus status;
   if (function == pC_->motorClosedLoop_) {
-    if (drvlocal.axisFlags & AMPLIFIER_ON_FLAG_USING_CNEN) {
+    if (drvlocal.cfg.axisFlags & AMPLIFIER_ON_FLAG_USING_CNEN) {
       (void)enableAmplifier(value);
     }
   }
@@ -650,33 +516,3 @@ asynStatus EssMCAGmotorAxis::setIntegerParam(int function, int value)
   return status;
 }
 
-/** Set a floating point parameter on the axis
-  * \param[in] function, which parameter is updated
-  * \param[in] value, the new value
-  *
-  * When the IOC starts, we will send the soft limits to the controller.
-  * When a soft limit is changed, and update is send them to the controller.
-  */
-asynStatus EssMCAGmotorAxis::setDoubleParam(int function, double value)
-{
-  asynStatus status;
-  if (function == pC_->motorHighLimit_) {
-    asynPrint(pC_->pasynUserController_, ASYN_TRACE_INFO,
-              "setDoubleParam(motorHighLimit_)=%f\n", value);
-    drvlocal.motorHighLimit = value;
-    drvlocal.defined.motorHighLimit = 1;
-    drvlocal.dirty.motorLimits = 1;
-    if (drvlocal.defined.motorLowLimit) setMotorLimitsOnAxis();
-  } else if (function == pC_->motorLowLimit_) {
-    asynPrint(pC_->pasynUserController_, ASYN_TRACE_INFO,
-              "setDoubleParam(motorLowLimit_)=%f\n", value);
-    drvlocal.motorLowLimit = value;
-    drvlocal.defined.motorLowLimit = 1;
-    drvlocal.dirty.motorLimits = 1;
-    if (drvlocal.defined.motorHighLimit) setMotorLimitsOnAxis();
-  }
-
-  // Call the base class method
-  status = asynMotorAxis::setDoubleParam(function, value);
-  return status;
-}

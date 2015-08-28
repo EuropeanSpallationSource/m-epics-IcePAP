@@ -17,8 +17,8 @@ dbLoadRecords("db/EssMCAGmotor.db", "P=IOC:,PORT=MCU1,M1=m1,M2=m2,M3=m3,M4=m4")
 
 ## Configure devices
 drvAsynIPPortConfigure("MC_CPU1","127.0.0.1:5024",0,0,0)
-asynOctetSetOutputEos("MC_CPU1", -1, ";\n")
-asynOctetSetInputEos("MC_CPU1", -1, ";\n")
+asynOctetSetOutputEos("MC_CPU1", -1, "\n")
+asynOctetSetInputEos("MC_CPU1", -1, "\n")
 EssMCAGmotorCreateController("MCU1", "MC_CPU1", "32", "200", "1000")
   #define ASYN_TRACE_ERROR     0x0001
   #define ASYN_TRACEIO_DEVICE  0x0002
@@ -47,11 +47,9 @@ asynSetTraceInfoMask("MC_CPU1", -1, 15)
 #define AMPLIFIER_ON_FLAG_CREATE_AXIS  (1)
 #define AMPLIFIER_ON_FLAG_WHEN_HOMING  (1<<1)
 #define AMPLIFIER_ON_FLAG_USING_CNEN   (1<<2)
-## ADSPORT=501/.ADR.16#5001,16#2,8,5?;
-#EssMCAGmotorCreateAxis("MCU1", "1", "2", "ADSPORT=501/.ADR.16#5181,16#2,8,5")
 
 ##Encoder steps via Ethercat
-EssMCAGmotorCreateAxis("MCU1", "1", "2", "encoder=ADSPORT=501/.ADR.16#3040010,16#80000049,2,2")
+EssMCAGmotorCreateAxis("MCU1", "1", "2", "")
 
 #EssMCAGmotorCreateAxis("MCU1", "1", "6", "")
 ##EssMCAGmotorCreateAxis("MCU1", "2")

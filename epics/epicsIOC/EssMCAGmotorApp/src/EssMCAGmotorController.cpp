@@ -103,6 +103,42 @@ asynStatus EssMCAGmotorController::writeReadOnErrorDisconnect(void)
   return status;
 }
 
+asynStatus EssMCAGmotorController::writeOnErrorDisconnect(void)
+{
+  size_t nwrite = 0;
+  asynStatus status;
+  size_t outlen = strlen(outString_);
+  status = pasynOctetSyncIO->write(pasynUserController_, outString_, outlen,
+                                   DEFAULT_CONTROLLER_TIMEOUT, &nwrite);
+  if (status == asynTimeout) {
+    asynInterface *pasynInterface = NULL;
+    asynCommon     *pasynCommon = NULL;
+    asynPrint(pasynUserController_, ASYN_TRACE_ERROR|ASYN_TRACEIO_DRIVER,
+              "out=%s status=asynTimeout (%d)\n",
+              outString_, (int)status);
+    pasynInterface = pasynManager->findInterface(pasynUserController_,
+                                                 asynCommonType,
+                                                 0 /* FALSE */);
+    if (pasynInterface) {
+      pasynCommon = (asynCommon *)pasynInterface->pinterface;
+      status = pasynCommon->disconnect(pasynInterface->drvPvt,
+                                       pasynUserController_);
+      handleStatusChange(asynError);
+      if (status != asynSuccess) {
+        asynPrint(pasynUserController_, ASYN_TRACE_ERROR|ASYN_TRACEIO_DRIVER,
+                  "out=%s status=%s (%d)\n",
+                  outString_, pasynManager->strStatus(status), (int)status);
+      }
+    } else {
+      asynPrint(pasynUserController_, ASYN_TRACE_ERROR|ASYN_TRACEIO_DRIVER,
+                "pasynInterface=%p pasynCommon=%p\n",
+                pasynInterface, pasynCommon);
+    }
+    return asynError; /* TimeOut -> Error */
+  }
+  return status;
+}
+
 void EssMCAGmotorController::handleStatusChange(asynStatus status)
 {
   int i;
