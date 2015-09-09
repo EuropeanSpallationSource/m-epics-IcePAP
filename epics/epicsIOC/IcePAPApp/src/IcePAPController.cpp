@@ -1,5 +1,5 @@
 /*
-FILENAME... EssMCAGmotorController.cpp
+FILENAME... IcePAPController.cpp
 */
 
 #include <stdio.h>
@@ -16,16 +16,16 @@ FILENAME... EssMCAGmotorController.cpp
 #include "asynMotorAxis.h"
 
 #include <epicsExport.h>
-#include "EssMCAGmotor.h"
+#include "IcePAP.h"
 
-/** Creates a new EssMCAGmotorController object.
+/** Creates a new IcePAPController object.
   * \param[in] portName          The name of the asyn port that will be created for this driver
-  * \param[in] MotorPortName     The name of the drvAsynSerialPort that was created previously to connect to the EssMCAGmotor controller
+  * \param[in] MotorPortName     The name of the drvAsynSerialPort that was created previously to connect to the IcePAP controller
   * \param[in] numAxes           The number of axes that this controller supports
   * \param[in] movingPollPeriod  The time between polls when any axis is moving
   * \param[in] idlePollPeriod    The time between polls when no axis is moving
   */
-EssMCAGmotorController::EssMCAGmotorController(const char *portName, const char *MotorPortName, int numAxes,
+IcePAPController::IcePAPController(const char *portName, const char *MotorPortName, int numAxes,
                                                double movingPollPeriod,double idlePollPeriod)
   :  asynMotorController(portName, numAxes, NUM_VIRTUAL_MOTOR_PARAMS,
                          0, // No additional interfaces beyond those in base class
@@ -35,7 +35,7 @@ EssMCAGmotorController::EssMCAGmotorController(const char *portName, const char 
                          0, 0)  // Default priority and stack size
 {
   asynStatus status;
-  /* Connect to EssMCAGmotor controller */
+  /* Connect to IcePAP controller */
   status = pasynOctetSyncIO->connect(MotorPortName, 0, &pasynUserController_, NULL);
   if (status) {
     asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
@@ -45,25 +45,25 @@ EssMCAGmotorController::EssMCAGmotorController(const char *portName, const char 
 }
 
 
-/** Creates a new EssMCAGmotorController object.
+/** Creates a new IcePAPController object.
   * Configuration command, called directly or from iocsh
   * \param[in] portName          The name of the asyn port that will be created for this driver
-  * \param[in] MotorPortName  The name of the drvAsynIPPPort that was created previously to connect to the EssMCAGmotor controller
+  * \param[in] MotorPortName  The name of the drvAsynIPPPort that was created previously to connect to the IcePAP controller
   * \param[in] numAxes           The number of axes that this controller supports (0 is not used)
   * \param[in] movingPollPeriod  The time in ms between polls when any axis is moving
   * \param[in] idlePollPeriod    The time in ms between polls when no axis is moving
   */
-extern "C" int EssMCAGmotorCreateController(const char *portName, const char *MotorPortName, int numAxes,
+extern "C" int IcePAPCreateController(const char *portName, const char *MotorPortName, int numAxes,
                                             int movingPollPeriod, int idlePollPeriod)
 {
-  new EssMCAGmotorController(portName, MotorPortName, 1+numAxes, movingPollPeriod/1000., idlePollPeriod/1000.);
+  new IcePAPController(portName, MotorPortName, 1+numAxes, movingPollPeriod/1000., idlePollPeriod/1000.);
   return(asynSuccess);
 }
 
 /** Writes a string to the controller and reads a response.
   * Disconnects in case of error
   */
-asynStatus EssMCAGmotorController::writeReadOnErrorDisconnect(void)
+asynStatus IcePAPController::writeReadOnErrorDisconnect(void)
 {
   size_t nwrite = 0;
   asynStatus status;
@@ -103,7 +103,7 @@ asynStatus EssMCAGmotorController::writeReadOnErrorDisconnect(void)
   return status;
 }
 
-asynStatus EssMCAGmotorController::writeOnErrorDisconnect(void)
+asynStatus IcePAPController::writeOnErrorDisconnect(void)
 {
   size_t nwrite = 0;
   asynStatus status;
@@ -139,11 +139,11 @@ asynStatus EssMCAGmotorController::writeOnErrorDisconnect(void)
   return status;
 }
 
-void EssMCAGmotorController::handleStatusChange(asynStatus status)
+void IcePAPController::handleStatusChange(asynStatus status)
 {
   int i;
   for (i=0; i<numAxes_; i++) {
-    EssMCAGmotorAxis *pAxis=getAxis(i);
+    IcePAPAxis *pAxis=getAxis(i);
     if (!pAxis) continue;
     pAxis->handleStatusChange(status);
   }
@@ -156,7 +156,7 @@ void EssMCAGmotorController::handleStatusChange(asynStatus status)
   * If details > 0 then information is printed about each axis.
   * After printing controller-specific information it calls asynMotorController::report()
   */
-void EssMCAGmotorController::report(FILE *fp, int level)
+void IcePAPController::report(FILE *fp, int level)
 {
   fprintf(fp, "Twincat motor driver %s, numAxes=%d, moving poll period=%f, idle poll period=%f\n",
     this->portName, numAxes_, movingPollPeriod_, idlePollPeriod_);
@@ -165,27 +165,27 @@ void EssMCAGmotorController::report(FILE *fp, int level)
   asynMotorController::report(fp, level);
 }
 
-/** Returns a pointer to an EssMCAGmotorAxis object.
+/** Returns a pointer to an IcePAPAxis object.
   * Returns NULL if the axis number encoded in pasynUser is invalid.
   * \param[in] pasynUser asynUser structure that encodes the axis index number. */
-EssMCAGmotorAxis* EssMCAGmotorController::getAxis(asynUser *pasynUser)
+IcePAPAxis* IcePAPController::getAxis(asynUser *pasynUser)
 {
-  return static_cast<EssMCAGmotorAxis*>(asynMotorController::getAxis(pasynUser));
+  return static_cast<IcePAPAxis*>(asynMotorController::getAxis(pasynUser));
 }
 
-/** Returns a pointer to an EssMCAGmotorAxis object.
+/** Returns a pointer to an IcePAPAxis object.
   * Returns NULL if the axis number encoded in pasynUser is invalid.
   * \param[in] axisNo Axis index number. */
-EssMCAGmotorAxis* EssMCAGmotorController::getAxis(int axisNo)
+IcePAPAxis* IcePAPController::getAxis(int axisNo)
 {
-  return static_cast<EssMCAGmotorAxis*>(asynMotorController::getAxis(axisNo));
+  return static_cast<IcePAPAxis*>(asynMotorController::getAxis(axisNo));
 }
 
 
-asynStatus EssMCAGmotorController::writeInt32(asynUser *pasynUser, epicsInt32 value)
+asynStatus IcePAPController::writeInt32(asynUser *pasynUser, epicsInt32 value)
 {
   int function = pasynUser->reason;
-  EssMCAGmotorAxis *pAxis;
+  IcePAPAxis *pAxis;
   pAxis = getAxis(pasynUser);
   if (!pAxis) return asynError;
 
@@ -194,44 +194,44 @@ asynStatus EssMCAGmotorController::writeInt32(asynUser *pasynUser, epicsInt32 va
 }
 
 /** Code for iocsh registration */
-static const iocshArg EssMCAGmotorCreateControllerArg0 = {"Port name", iocshArgString};
-static const iocshArg EssMCAGmotorCreateControllerArg1 = {"EPICS ASYN TCP motor port name", iocshArgString};
-static const iocshArg EssMCAGmotorCreateControllerArg2 = {"Number of axes", iocshArgInt};
-static const iocshArg EssMCAGmotorCreateControllerArg3 = {"Moving poll period (ms)", iocshArgInt};
-static const iocshArg EssMCAGmotorCreateControllerArg4 = {"Idle poll period (ms)", iocshArgInt};
-static const iocshArg * const EssMCAGmotorCreateControllerArgs[] = {&EssMCAGmotorCreateControllerArg0,
-                                                             &EssMCAGmotorCreateControllerArg1,
-                                                             &EssMCAGmotorCreateControllerArg2,
-                                                             &EssMCAGmotorCreateControllerArg3,
-                                                             &EssMCAGmotorCreateControllerArg4};
-static const iocshFuncDef EssMCAGmotorCreateControllerDef = {"EssMCAGmotorCreateController", 5, EssMCAGmotorCreateControllerArgs};
-static void EssMCAGmotorCreateContollerCallFunc(const iocshArgBuf *args)
+static const iocshArg IcePAPCreateControllerArg0 = {"Port name", iocshArgString};
+static const iocshArg IcePAPCreateControllerArg1 = {"EPICS ASYN TCP motor port name", iocshArgString};
+static const iocshArg IcePAPCreateControllerArg2 = {"Number of axes", iocshArgInt};
+static const iocshArg IcePAPCreateControllerArg3 = {"Moving poll period (ms)", iocshArgInt};
+static const iocshArg IcePAPCreateControllerArg4 = {"Idle poll period (ms)", iocshArgInt};
+static const iocshArg * const IcePAPCreateControllerArgs[] = {&IcePAPCreateControllerArg0,
+                                                             &IcePAPCreateControllerArg1,
+                                                             &IcePAPCreateControllerArg2,
+                                                             &IcePAPCreateControllerArg3,
+                                                             &IcePAPCreateControllerArg4};
+static const iocshFuncDef IcePAPCreateControllerDef = {"IcePAPCreateController", 5, IcePAPCreateControllerArgs};
+static void IcePAPCreateContollerCallFunc(const iocshArgBuf *args)
 {
-  EssMCAGmotorCreateController(args[0].sval, args[1].sval, args[2].ival, args[3].ival, args[4].ival);
+  IcePAPCreateController(args[0].sval, args[1].sval, args[2].ival, args[3].ival, args[4].ival);
 }
 
 
-/* EssMCAGmotorCreateAxis */
-static const iocshArg EssMCAGmotorCreateAxisArg0 = {"Controller port name", iocshArgString};
-static const iocshArg EssMCAGmotorCreateAxisArg1 = {"Axis number", iocshArgInt};
-static const iocshArg EssMCAGmotorCreateAxisArg2 = {"axisFlags", iocshArgInt};
-static const iocshArg EssMCAGmotorCreateAxisArg3 = {"axisOptionsStr", iocshArgString};
-static const iocshArg * const EssMCAGmotorCreateAxisArgs[] = {&EssMCAGmotorCreateAxisArg0,
-							      &EssMCAGmotorCreateAxisArg1,
-							      &EssMCAGmotorCreateAxisArg2,
-							      &EssMCAGmotorCreateAxisArg3};
-static const iocshFuncDef EssMCAGmotorCreateAxisDef = {"EssMCAGmotorCreateAxis", 4, EssMCAGmotorCreateAxisArgs};
-static void EssMCAGmotorCreateAxisCallFunc(const iocshArgBuf *args)
+/* IcePAPCreateAxis */
+static const iocshArg IcePAPCreateAxisArg0 = {"Controller port name", iocshArgString};
+static const iocshArg IcePAPCreateAxisArg1 = {"Axis number", iocshArgInt};
+static const iocshArg IcePAPCreateAxisArg2 = {"axisFlags", iocshArgInt};
+static const iocshArg IcePAPCreateAxisArg3 = {"axisOptionsStr", iocshArgString};
+static const iocshArg * const IcePAPCreateAxisArgs[] = {&IcePAPCreateAxisArg0,
+							      &IcePAPCreateAxisArg1,
+							      &IcePAPCreateAxisArg2,
+							      &IcePAPCreateAxisArg3};
+static const iocshFuncDef IcePAPCreateAxisDef = {"IcePAPCreateAxis", 4, IcePAPCreateAxisArgs};
+static void IcePAPCreateAxisCallFunc(const iocshArgBuf *args)
 {
-  EssMCAGmotorCreateAxis(args[0].sval, args[1].ival, args[2].ival, args[3].sval);
+  IcePAPCreateAxis(args[0].sval, args[1].ival, args[2].ival, args[3].sval);
 }
 
-static void EssMCAGmotorControllerRegister(void)
+static void IcePAPControllerRegister(void)
 {
-  iocshRegister(&EssMCAGmotorCreateControllerDef, EssMCAGmotorCreateContollerCallFunc);
-  iocshRegister(&EssMCAGmotorCreateAxisDef,       EssMCAGmotorCreateAxisCallFunc);
+  iocshRegister(&IcePAPCreateControllerDef, IcePAPCreateContollerCallFunc);
+  iocshRegister(&IcePAPCreateAxisDef,       IcePAPCreateAxisCallFunc);
 }
 
 extern "C" {
-  epicsExportRegistrar(EssMCAGmotorControllerRegister);
+  epicsExportRegistrar(IcePAPControllerRegister);
 }

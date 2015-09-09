@@ -1,4 +1,4 @@
-file "EssMCAGmotor.template"
+file "IcePAP.template"
 {
 pattern
 {P,       N,  M,      DTYP,         PORT,     ADDR,  DESC,          EGU, DIR,  VELO, JVEL,  VBAS,  ACCL,  BDST, DLY,  BVEL,  BACC,  MRES,  ERES, PREC,  DLLM,  DHLM,  INIT}

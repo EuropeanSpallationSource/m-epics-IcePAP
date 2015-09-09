@@ -1,5 +1,5 @@
 /*
-FILENAME...   EssMCAGmotor.h
+FILENAME...   IcePAP.h
 */
 
 #include "asynMotorController.h"
@@ -13,7 +13,7 @@ FILENAME...   EssMCAGmotor.h
 #define AMPLIFIER_ON_FLAG_USING_CNEN   (1<<2)
 
 extern "C" {
-  int EssMCAGmotorCreateAxis(const char *EssMCAGmotorName, int axisNo,
+  int IcePAPCreateAxis(const char *IcePAPName, int axisNo,
 			     int axisFlags, const char *axisOptionsStr);
 }
 
@@ -22,11 +22,11 @@ typedef struct {
   int          motorPosition;
 } st_axis_status_type;
 
-class epicsShareClass EssMCAGmotorAxis : public asynMotorAxis
+class epicsShareClass IcePAPAxis : public asynMotorAxis
 {
 public:
   /* These are the methods we override from the base class */
-  EssMCAGmotorAxis(class EssMCAGmotorController *pC, int axisNo,
+  IcePAPAxis(class IcePAPController *pC, int axisNo,
 		   int axisFlags, const char *axisOptionsStr);
   void report(FILE *fp, int level);
   asynStatus move(double position, int relative, double min_velocity, double max_velocity, double acceleration);
@@ -36,7 +36,7 @@ public:
   asynStatus poll(bool *moving);
 
 private:
-  EssMCAGmotorController *pC_;          /**< Pointer to the asynMotorController to which this axis belongs.
+  IcePAPController *pC_;          /**< Pointer to the asynMotorController to which this axis belongs.
                                    *   Abbreviated because it is used very frequently */
   struct {
     st_axis_status_type lastpoll;
@@ -61,22 +61,22 @@ private:
   asynStatus setIntegerParam(int function, int value);
   asynStatus stopAxisInternal(const char *function_name, double acceleration);
 
-  friend class EssMCAGmotorController;
+  friend class IcePAPController;
 };
 
-class epicsShareClass EssMCAGmotorController : public asynMotorController {
+class epicsShareClass IcePAPController : public asynMotorController {
 public:
-  EssMCAGmotorController(const char *portName, const char *EssMCAGmotorPortName, int numAxes, double movingPollPeriod, double idlePollPeriod);
+  IcePAPController(const char *portName, const char *IcePAPPortName, int numAxes, double movingPollPeriod, double idlePollPeriod);
 
   void report(FILE *fp, int level);
   asynStatus writeReadOnErrorDisconnect(void);
   asynStatus writeOnErrorDisconnect(void);
 
-  EssMCAGmotorAxis* getAxis(asynUser *pasynUser);
-  EssMCAGmotorAxis* getAxis(int axisNo);
+  IcePAPAxis* getAxis(asynUser *pasynUser);
+  IcePAPAxis* getAxis(int axisNo);
   protected:
   void handleStatusChange(asynStatus status);
   asynStatus writeInt32(asynUser *pasynUser, epicsInt32 value);
 
-  friend class EssMCAGmotorAxis;
+  friend class IcePAPAxis;
 };

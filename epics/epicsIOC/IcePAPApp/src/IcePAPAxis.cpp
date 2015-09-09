@@ -1,5 +1,5 @@
 /*
-FILENAME... EssMCAGmotorAxis.cpp
+FILENAME... IcePAPAxis.cpp
 */
 
 #include <stdio.h>
@@ -8,7 +8,7 @@ FILENAME... EssMCAGmotorAxis.cpp
 
 #include <epicsThread.h>
 
-#include "EssMCAGmotor.h"
+#include "IcePAP.h"
 
 #ifndef ASYN_TRACE_INFO
 #define ASYN_TRACE_INFO      0x0040
@@ -57,17 +57,17 @@ FILENAME... EssMCAGmotorAxis.cpp
 #define STATUS_BIT_31        (1<<31)
 
 //
-// These are the EssMCAGmotorAxis methods
+// These are the IcePAPAxis methods
 //
 
-/** Creates a new EssMCAGmotorAxis object.
-  * \param[in] pC Pointer to the EssMCAGmotorController to which this axis belongs.
+/** Creates a new IcePAPAxis object.
+  * \param[in] pC Pointer to the IcePAPController to which this axis belongs.
   * \param[in] axisNo Index number of this axis, range 1 to pC->numAxes_. (0 is not used)
   *
   *
   * Initializes register numbers, etc.
   */
-EssMCAGmotorAxis::EssMCAGmotorAxis(EssMCAGmotorController *pC, int axisNo,
+IcePAPAxis::IcePAPAxis(IcePAPController *pC, int axisNo,
 				   int axisFlags, const char *axisOptionsStr)
   : asynMotorAxis(pC, axisNo),
     pC_(pC)
@@ -103,19 +103,19 @@ EssMCAGmotorAxis::EssMCAGmotorAxis(EssMCAGmotorController *pC, int axisNo,
 }
 
 
-extern "C" int EssMCAGmotorCreateAxis(const char *EssMCAGmotorName, int axisNo,
+extern "C" int IcePAPCreateAxis(const char *IcePAPName, int axisNo,
 				      int axisFlags, const char *axisOptionsStr)
 {
-  EssMCAGmotorController *pC;
+  IcePAPController *pC;
 
-  pC = (EssMCAGmotorController*) findAsynPortDriver(EssMCAGmotorName);
+  pC = (IcePAPController*) findAsynPortDriver(IcePAPName);
   if (!pC)
   {
-    printf("Error port %s not found\n", EssMCAGmotorName);
+    printf("Error port %s not found\n", IcePAPName);
     return asynError;
   }
   pC->lock();
-  new EssMCAGmotorAxis(pC, axisNo, axisFlags, axisOptionsStr);
+  new IcePAPAxis(pC, axisNo, axisFlags, axisOptionsStr);
   pC->unlock();
   return asynSuccess;
 }
@@ -126,10 +126,10 @@ extern "C" int EssMCAGmotorCreateAxis(const char *EssMCAGmotorName, int axisNo,
   *
   * Sets the dirty bits
   */
-void EssMCAGmotorAxis::handleStatusChange(asynStatus newStatus)
+void IcePAPAxis::handleStatusChange(asynStatus newStatus)
 {
   asynPrint(pC_->pasynUserController_, ASYN_TRACE_ERROR|ASYN_TRACEIO_DRIVER,
-            "EssMCAGmotorAxis::handleStatusChange status=%s (%d)\n",
+            "IcePAPAxis::handleStatusChange status=%s (%d)\n",
             pasynManager->strStatus(newStatus), (int)newStatus);
   if (newStatus == asynSuccess) {
     if (drvlocal.cfg.axisFlags & AMPLIFIER_ON_FLAG_CREATE_AXIS) {
@@ -148,7 +148,7 @@ void EssMCAGmotorAxis::handleStatusChange(asynStatus newStatus)
   *
   * After printing device-specific information calls asynMotorAxis::report()
   */
-void EssMCAGmotorAxis::report(FILE *fp, int level)
+void IcePAPAxis::report(FILE *fp, int level)
 {
   if (level > 0) {
     fprintf(fp, "  axis %d\n", axisNo_);
@@ -166,7 +166,7 @@ void EssMCAGmotorAxis::report(FILE *fp, int level)
   *
   * When the communictaion fails ot times out, writeReadOnErrorDisconnect() is called
   */
-asynStatus EssMCAGmotorAxis::writeReadACK(void)
+asynStatus IcePAPAxis::writeReadACK(void)
 {
   asynStatus status = pC_->writeReadOnErrorDisconnect();
   switch (status) {
@@ -199,7 +199,7 @@ asynStatus EssMCAGmotorAxis::writeReadACK(void)
   * \param[in] value the (integer) variable to be updated
   *
   */
-asynStatus EssMCAGmotorAxis::setValueOnAxis(const char* var)
+asynStatus IcePAPAxis::setValueOnAxis(const char* var)
 {
   sprintf(pC_->outString_, "#%d:%s", axisNo_, var);
   return writeReadACK();
@@ -211,7 +211,7 @@ asynStatus EssMCAGmotorAxis::setValueOnAxis(const char* var)
   * \param[in] value the (integer) variable to be updated
   *
   */
-asynStatus EssMCAGmotorAxis::setValueOnAxis(const char* var, const char *value)
+asynStatus IcePAPAxis::setValueOnAxis(const char* var, const char *value)
 {
   sprintf(pC_->outString_, "#%d:%s %s", axisNo_, var, value);
   return writeReadACK();
@@ -223,7 +223,7 @@ asynStatus EssMCAGmotorAxis::setValueOnAxis(const char* var, const char *value)
   * \param[in] value the (integer) variable to be updated
   *
   */
-asynStatus EssMCAGmotorAxis::setValueOnAxis(const char* var, int value)
+asynStatus IcePAPAxis::setValueOnAxis(const char* var, int value)
 {
   sprintf(pC_->outString_, "#%d:%s %d", axisNo_, var, value);
   return writeReadACK();
@@ -234,7 +234,7 @@ asynStatus EssMCAGmotorAxis::setValueOnAxis(const char* var, int value)
   * \param[in] pointer to the string result
   *
   */
-asynStatus EssMCAGmotorAxis::getValueFromAxis(const char* var,
+asynStatus IcePAPAxis::getValueFromAxis(const char* var,
                                               unsigned len, char *value)
 {
   char format_string[128];
@@ -263,7 +263,7 @@ asynStatus EssMCAGmotorAxis::getValueFromAxis(const char* var,
   * \param[in] pointer to the integer result
   *
   */
-asynStatus EssMCAGmotorAxis::getValueFromAxis(const char* var, int *value)
+asynStatus IcePAPAxis::getValueFromAxis(const char* var, int *value)
 {
   char format_string[100];
   asynStatus comStatus;
@@ -294,7 +294,7 @@ asynStatus EssMCAGmotorAxis::getValueFromAxis(const char* var, int *value)
   * \param[in] pointer to the integer result
   *
   */
-asynStatus EssMCAGmotorAxis::getFastValueFromAxis(const char* var, const char *extra, int *value)
+asynStatus IcePAPAxis::getFastValueFromAxis(const char* var, const char *extra, int *value)
 {
   char format_string[100];
   asynStatus comStatus;
@@ -328,7 +328,7 @@ asynStatus EssMCAGmotorAxis::getFastValueFromAxis(const char* var, const char *e
   * \param[in] acceleration, seconds to maximum velocity
   *
   */
-asynStatus EssMCAGmotorAxis::move(double position, int relative, double minVelocity, double maxVelocity, double acceleration)
+asynStatus IcePAPAxis::move(double position, int relative, double minVelocity, double maxVelocity, double acceleration)
 {
   asynStatus status = asynSuccess;
 
@@ -347,7 +347,7 @@ asynStatus EssMCAGmotorAxis::move(double position, int relative, double minVeloc
   * \param[in] forwards (0=backwards, otherwise forwards)
   *
   */
-asynStatus EssMCAGmotorAxis::home(double minVelocity, double maxVelocity, double acceleration, int forwards)
+asynStatus IcePAPAxis::home(double minVelocity, double maxVelocity, double acceleration, int forwards)
 {
   asynStatus status = asynSuccess;
 
@@ -367,7 +367,7 @@ asynStatus EssMCAGmotorAxis::home(double minVelocity, double maxVelocity, double
   * \param[in] acceleration, seconds to maximum velocity
   *
   */
-asynStatus EssMCAGmotorAxis::moveVelocity(double minVelocity, double maxVelocity, double acceleration)
+asynStatus IcePAPAxis::moveVelocity(double minVelocity, double maxVelocity, double acceleration)
 {
   asynStatus status = asynSuccess;
   if (status == asynSuccess) setValueOnAxis("JOG", (int)maxVelocity);
@@ -378,7 +378,7 @@ asynStatus EssMCAGmotorAxis::moveVelocity(double minVelocity, double maxVelocity
 /** Enable the amplifier on an axis
   *
   */
-asynStatus EssMCAGmotorAxis::enableAmplifier(int on)
+asynStatus IcePAPAxis::enableAmplifier(int on)
 {
   return setValueOnAxis("POWER", on ? "ON" : "OFF");
 }
@@ -386,7 +386,7 @@ asynStatus EssMCAGmotorAxis::enableAmplifier(int on)
 /** Stop the axis
   *
   */
-asynStatus EssMCAGmotorAxis::stopAxisInternal(const char *function_name, double acceleration)
+asynStatus IcePAPAxis::stopAxisInternal(const char *function_name, double acceleration)
 {
   asynStatus status = setValueOnAxis("STOP"); /* Page 127 */
   if (status == asynSuccess) {
@@ -399,7 +399,7 @@ asynStatus EssMCAGmotorAxis::stopAxisInternal(const char *function_name, double 
 /** Stop the axis, called by motor Record
   *
   */
-asynStatus EssMCAGmotorAxis::stop(double acceleration )
+asynStatus IcePAPAxis::stop(double acceleration )
 {
   return stopAxisInternal(__FUNCTION__, acceleration);
 }
@@ -410,7 +410,7 @@ asynStatus EssMCAGmotorAxis::stop(double acceleration )
   * and the drive power-on status.
   * and then calls callParamCallbacks() at the end.
   * \param[out] moving A flag that is set indicating that the axis is moving (true) or done (false). */
-asynStatus EssMCAGmotorAxis::poll(bool *moving)
+asynStatus IcePAPAxis::poll(bool *moving)
 {
   st_axis_status_type st_axis_status;
   asynStatus comStatus;
@@ -511,7 +511,7 @@ badpollall:
   return asynError;
 }
 
-asynStatus EssMCAGmotorAxis::setIntegerParam(int function, int value)
+asynStatus IcePAPAxis::setIntegerParam(int function, int value)
 {
   asynStatus status;
   if (function == pC_->motorClosedLoop_) {
