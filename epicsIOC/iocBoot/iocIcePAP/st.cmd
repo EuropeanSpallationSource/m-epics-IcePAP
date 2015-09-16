@@ -16,7 +16,7 @@ IcePAP_registerRecordDeviceDriver pdbbase
 dbLoadRecords("db/IcePAP.db", "P=IOC:,PORT=MCU1,M1=m1,M2=m2,M3=m3,M4=m4")
 
 ## Configure devices
-drvAsynIPPortConfigure("MC_CPU1","127.0.0.1:5024",0,0,0)
+drvAsynIPPortConfigure("MC_CPU1","192.168.11.10:5000",0,0,0)
 asynOctetSetOutputEos("MC_CPU1", -1, "\n")
 asynOctetSetInputEos("MC_CPU1", -1, "\n")
 IcePAPCreateController("MCU1", "MC_CPU1", "32", "200", "1000")
