@@ -6,10 +6,6 @@ if test -z "$EPICS_BASE";then
   exit 1
 fi
 
-#EPICS_CA_AUTO_ADDR_LIST=no
-#EPICS_CA_ADDR_LIST="192.168.88.181"
-#export EPICS_CA_AUTO_ADDR_LIST EPICS_CA_ADDR_LIST
-
 MOTORIP=127.0.0.1
 MOTORPORT=5024
 
@@ -22,10 +18,6 @@ if test -n "$1"; then
     MOTORPORT=$PORT
   fi
   echo HOST=$HOST MOTORPORT=$MOTORPORT
-  MOTORIP=$(PATH=.:$PATH netlookup.sh $HOST) || {
-  echo >&2 "Can not lookup $1"
-    exit 1
-  }
   echo MOTORIP=$MOTORIP
 fi
 export MOTORIP MOTORPORT
@@ -134,7 +126,7 @@ EOF
   rm -f $stcmddst &&
   sed <$stcmdsrc \
     -e "s/__EPICS_HOST_ARCH/$EPICS_HOST_ARCH/" \
-    -e "s/127.0.0.1:5024/$MOTORIP:$MOTORPORT/" \
+    -e "s/[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*:[0-9]*/$MOTORIP:$MOTORPORT/" \
       | grep -v '^  *#' >$stcmddst &&
   chmod -w $stcmddst &&
   chmod +x $stcmddst &&
