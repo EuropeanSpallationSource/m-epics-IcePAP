@@ -1,10 +1,9 @@
-_Boot/
-_CompileInfo/
-_Libraries/
+builddir/
 *.bak
 *.~u
 *.pyc
-*.tpy
-*.suo
+*~
+
+
 
 
