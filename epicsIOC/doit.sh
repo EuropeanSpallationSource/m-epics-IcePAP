@@ -6,6 +6,13 @@ if test -z "$EPICS_BASE";then
   exit 1
 fi
 
+FILE=../../.epics
+if ! test -r $FILE; then
+    echo >&2 "Can not read $FILE"
+    exit 1
+fi
+. $FILE
+
 MOTORIP=127.0.0.1
 MOTORPORT=5024
 
