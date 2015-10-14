@@ -23,6 +23,15 @@ record(motor,"$(P)$(M)")
 	field(TWV,"1")
 }
 
+grecord(ai,"$(P)$(M)READBACK") {
+    field(DESC,"Readback")
+    field(PREC,"4")
+    field(PINI, "1")
+    field(DTYP, "asynFloat64")
+    field(SCAN, "I/O Intr")
+    field(INP,"@asyn($(PORT),$(ADDR))MOTOR_POSITION")
+}
+
 record (asyn, "$(P)$(PORT):asyn")
 {
 }
