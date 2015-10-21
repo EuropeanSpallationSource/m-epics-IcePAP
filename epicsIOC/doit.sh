@@ -6,12 +6,12 @@ if test -z "$EPICS_BASE";then
   exit 1
 fi
 
-FILE=../../.epics
-if ! test -r $FILE; then
-    echo >&2 "Can not read $FILE"
+BASH_ALIAS_EPICS=../../.epics.$(hostname)
+if ! test -r $BASH_ALIAS_EPICS; then
+    echo >&2 "Can not read $BASH_ALIAS_EPICS"
     exit 1
 fi
-. $FILE
+. $BASH_ALIAS_EPICS
 
 MOTORIP=127.0.0.1
 MOTORPORT=5024
