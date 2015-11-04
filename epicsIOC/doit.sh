@@ -1,10 +1,6 @@
 #!/bin/sh
 APPXX=IcePAP
 export APPXX
-if test -z "$EPICS_BASE";then
-  echo >&2 "EPICS_BASE" is not set
-  exit 1
-fi
 
 BASH_ALIAS_EPICS=../../.epics.$(hostname)
 if ! test -r $BASH_ALIAS_EPICS; then
@@ -12,6 +8,11 @@ if ! test -r $BASH_ALIAS_EPICS; then
     exit 1
 fi
 . $BASH_ALIAS_EPICS
+
+if test -z "$EPICS_BASE";then
+  echo >&2 "EPICS_BASE" is not set
+  exit 1
+fi
 
 MOTORIP=127.0.0.1
 MOTORPORT=5024
