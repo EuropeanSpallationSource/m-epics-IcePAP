@@ -596,7 +596,7 @@ int getPosLimitSwitch(int axis_no)
   return motor_axis[axis_no].hitPosLimitSwitch;
 }
 
-int get_bError(motor_axis_no)
+int get_bError(int motor_axis_no)
 {
 #if 0
   double HomeVelocityAbsWanted = motor_axis[motor_axis_no].HomeVelocityAbsWanted;
