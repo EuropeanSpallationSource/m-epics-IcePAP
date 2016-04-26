@@ -1,7 +1,16 @@
 cd ${TOP}
 
 ## Register all support components
-dbLoadDatabase "dbd/IcePAP.dbd"
+## XX dbLoadDatabase "dbd/IcePAP.dbd"
+
+
+cd IcePAPApp/Db
+dbLoadTemplate("IcePAP.substitutions")
+cd ${TOP}
+
+
+
+
 IcePAP_registerRecordDeviceDriver pdbbase
 
 ## Load record instances

@@ -23,7 +23,7 @@ record(motor,"$(P)$(M)")
 	field(TWV,"1")
 }
 
-grecord(ai,"$(P)$(M)READBACK") {
+grecord(ai,"$(P)$(R)READBACK") {
     field(DESC,"Readback")
     field(PREC,"4")
     field(PINI, "1")

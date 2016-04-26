@@ -8,12 +8,5 @@ SOURCES = \
   IcePAPApp/src/IcePAPController.cpp \
   IcePAPApp/src/IcePAPMain.cpp
 
-
-
-
-
-#TEMPLATES = \
-#  ecmcApp/Db/ecmcController.template \
-#  ecmcApp/Db/ecmc.template \
-#  ecmcApp/Db/ecmc-extra.template
-
+TEMPLATES = \
+  IcePAPApp/Db/IcePAP.template
