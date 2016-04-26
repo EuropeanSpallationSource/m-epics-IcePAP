@@ -1,12 +1,12 @@
 /*
-FILENAME...   IcePAP.h
+  FILENAME...   IcePAP.h
 */
 
 #include "asynMotorController.h"
 #include "asynMotorAxis.h"
 
 // No controller-specific parameters yet
-#define NUM_VIRTUAL_MOTOR_PARAMS 0  
+#define NUM_VIRTUAL_MOTOR_PARAMS 0
 
 #define AMPLIFIER_ON_FLAG_CREATE_AXIS  (1)
 #define AMPLIFIER_ON_FLAG_WHEN_HOMING  (1<<1)
@@ -14,7 +14,7 @@ FILENAME...   IcePAP.h
 
 extern "C" {
   int IcePAPCreateAxis(const char *IcePAPName, int axisNo,
-			     int axisFlags, const char *axisOptionsStr);
+                       int axisFlags, const char *axisOptionsStr);
 }
 
 typedef struct {
@@ -24,10 +24,10 @@ typedef struct {
 
 class epicsShareClass IcePAPAxis : public asynMotorAxis
 {
-public:
+  public:
   /* These are the methods we override from the base class */
   IcePAPAxis(class IcePAPController *pC, int axisNo,
-		   int axisFlags, const char *axisOptionsStr);
+             int axisFlags, const char *axisOptionsStr);
   void report(FILE *fp, int level);
   asynStatus move(double position, int relative, double min_velocity, double max_velocity, double acceleration);
   asynStatus moveVelocity(double min_velocity, double max_velocity, double acceleration);
@@ -35,7 +35,7 @@ public:
   asynStatus stop(double acceleration);
   asynStatus poll(bool *moving);
 
-private:
+  private:
   IcePAPController *pC_;          /**< Pointer to the asynMotorController to which this axis belongs.
                                    *   Abbreviated because it is used very frequently */
   struct {
@@ -65,7 +65,7 @@ private:
 };
 
 class epicsShareClass IcePAPController : public asynMotorController {
-public:
+  public:
   IcePAPController(const char *portName, const char *IcePAPPortName, int numAxes, double movingPollPeriod, double idlePollPeriod);
 
   void report(FILE *fp, int level);

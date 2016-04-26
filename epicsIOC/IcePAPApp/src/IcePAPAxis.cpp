@@ -1,5 +1,5 @@
 /*
-FILENAME... IcePAPAxis.cpp
+  FILENAME... IcePAPAxis.cpp
 */
 
 #include <stdio.h>
@@ -61,14 +61,14 @@ FILENAME... IcePAPAxis.cpp
 //
 
 /** Creates a new IcePAPAxis object.
-  * \param[in] pC Pointer to the IcePAPController to which this axis belongs.
-  * \param[in] axisNo Index number of this axis, range 1 to pC->numAxes_. (0 is not used)
-  *
-  *
-  * Initializes register numbers, etc.
-  */
+ * \param[in] pC Pointer to the IcePAPController to which this axis belongs.
+ * \param[in] axisNo Index number of this axis, range 1 to pC->numAxes_. (0 is not used)
+ *
+ *
+ * Initializes register numbers, etc.
+ */
 IcePAPAxis::IcePAPAxis(IcePAPController *pC, int axisNo,
-				   int axisFlags, const char *axisOptionsStr)
+                       int axisFlags, const char *axisOptionsStr)
   : asynMotorAxis(pC, axisNo),
     pC_(pC)
 {
@@ -104,7 +104,7 @@ IcePAPAxis::IcePAPAxis(IcePAPController *pC, int axisNo,
 
 
 extern "C" int IcePAPCreateAxis(const char *IcePAPName, int axisNo,
-				      int axisFlags, const char *axisOptionsStr)
+                                int axisFlags, const char *axisOptionsStr)
 {
   IcePAPController *pC;
 
@@ -122,10 +122,10 @@ extern "C" int IcePAPCreateAxis(const char *IcePAPName, int axisNo,
 
 /** Connection status is changed, the dirty bits must be set and
  *  the values in the controller must be updated
-  * \param[in] AsynStatus status
-  *
-  * Sets the dirty bits
-  */
+ * \param[in] AsynStatus status
+ *
+ * Sets the dirty bits
+ */
 void IcePAPAxis::handleStatusChange(asynStatus newStatus)
 {
   asynPrint(pC_->pasynUserController_, ASYN_TRACE_ERROR|ASYN_TRACEIO_DRIVER,
@@ -133,26 +133,26 @@ void IcePAPAxis::handleStatusChange(asynStatus newStatus)
             pasynManager->strStatus(newStatus), (int)newStatus);
   if (newStatus == asynSuccess) {
     if (drvlocal.cfg.axisFlags & AMPLIFIER_ON_FLAG_CREATE_AXIS) {
-	/* Enable the amplifier when the axis is created,
-	   but wait until we have a connection to the controller.
-	   After we lost the connection, Re-enable the amplifier
-	   See AMPLIFIER_ON_FLAG */
+      /* Enable the amplifier when the axis is created,
+         but wait until we have a connection to the controller.
+         After we lost the connection, Re-enable the amplifier
+         See AMPLIFIER_ON_FLAG */
       enableAmplifier(1);
     }
   }
 }
 
 /** Reports on status of the axis
-  * \param[in] fp The file pointer on which report information will be written
-  * \param[in] level The level of report detail desired
-  *
-  * After printing device-specific information calls asynMotorAxis::report()
-  */
+ * \param[in] fp The file pointer on which report information will be written
+ * \param[in] level The level of report detail desired
+ *
+ * After printing device-specific information calls asynMotorAxis::report()
+ */
 void IcePAPAxis::report(FILE *fp, int level)
 {
   if (level > 0) {
     fprintf(fp, "  axis %d\n", axisNo_);
- }
+  }
 
   // Call the base class method
   asynMotorAxis::report(fp, level);
@@ -160,12 +160,12 @@ void IcePAPAxis::report(FILE *fp, int level)
 
 
 /** Writes a command to the axis, and expects a logical ack from the controller
-  * Outdata is in pC_->outString_
-  * Indata is in pC_->inString_
-  * The communiction is logged ASYN_TRACE_INFO
-  *
-  * When the communictaion fails ot times out, writeReadOnErrorDisconnect() is called
-  */
+ * Outdata is in pC_->outString_
+ * Indata is in pC_->inString_
+ * The communiction is logged ASYN_TRACE_INFO
+ *
+ * When the communictaion fails ot times out, writeReadOnErrorDisconnect() is called
+ */
 asynStatus IcePAPAxis::writeReadACK(void)
 {
   asynStatus status = pC_->writeReadOnErrorDisconnect();
@@ -194,11 +194,11 @@ asynStatus IcePAPAxis::writeReadACK(void)
 
 
 /** Sets an integer or boolean value on an axis
-  * the values in the controller must be updated
-  * \param[in] name of the variable to be updated
-  * \param[in] value the (integer) variable to be updated
-  *
-  */
+ * the values in the controller must be updated
+ * \param[in] name of the variable to be updated
+ * \param[in] value the (integer) variable to be updated
+ *
+ */
 asynStatus IcePAPAxis::setValueOnAxis(const char* var)
 {
   sprintf(pC_->outString_, "#%d:%s", axisNo_, var);
@@ -206,11 +206,11 @@ asynStatus IcePAPAxis::setValueOnAxis(const char* var)
 }
 
 /** Sets an integer or boolean value on an axis
-  * the values in the controller must be updated
-  * \param[in] name of the variable to be updated
-  * \param[in] value the (integer) variable to be updated
-  *
-  */
+ * the values in the controller must be updated
+ * \param[in] name of the variable to be updated
+ * \param[in] value the (integer) variable to be updated
+ *
+ */
 asynStatus IcePAPAxis::setValueOnAxis(const char* var, const char *value)
 {
   sprintf(pC_->outString_, "#%d:%s %s", axisNo_, var, value);
@@ -218,11 +218,11 @@ asynStatus IcePAPAxis::setValueOnAxis(const char* var, const char *value)
 }
 
 /** Sets an integer or boolean value on an axis
-  * the values in the controller must be updated
-  * \param[in] name of the variable to be updated
-  * \param[in] value the (integer) variable to be updated
-  *
-  */
+ * the values in the controller must be updated
+ * \param[in] name of the variable to be updated
+ * \param[in] value the (integer) variable to be updated
+ *
+ */
 asynStatus IcePAPAxis::setValueOnAxis(const char* var, int value)
 {
   sprintf(pC_->outString_, "#%d:%s %d", axisNo_, var, value);
@@ -230,12 +230,12 @@ asynStatus IcePAPAxis::setValueOnAxis(const char* var, int value)
 }
 
 /** Gets a stringfrom an axis
-  * \param[in] name of the variable to be retrieved
-  * \param[in] pointer to the string result
-  *
-  */
+ * \param[in] name of the variable to be retrieved
+ * \param[in] pointer to the string result
+ *
+ */
 asynStatus IcePAPAxis::getValueFromAxis(const char* var,
-                                              unsigned len, char *value)
+                                        unsigned len, char *value)
 {
   char format_string[128];
   asynStatus comStatus;
@@ -259,10 +259,10 @@ asynStatus IcePAPAxis::getValueFromAxis(const char* var,
 }
 
 /** Gets an integer or boolean value from an axis
-  * \param[in] name of the variable to be retrieved
-  * \param[in] pointer to the integer result
-  *
-  */
+ * \param[in] name of the variable to be retrieved
+ * \param[in] pointer to the integer result
+ *
+ */
 asynStatus IcePAPAxis::getValueFromAxis(const char* var, int *value)
 {
   char format_string[100];
@@ -290,10 +290,10 @@ asynStatus IcePAPAxis::getValueFromAxis(const char* var, int *value)
 }
 
 /** Gets an integer or boolean value from an axis
-  * \param[in] name of the variable to be retrieved
-  * \param[in] pointer to the integer result
-  *
-  */
+ * \param[in] name of the variable to be retrieved
+ * \param[in] pointer to the integer result
+ *
+ */
 asynStatus IcePAPAxis::getFastValueFromAxis(const char* var, const char *extra, int *value)
 {
   char format_string[100];
@@ -321,13 +321,13 @@ asynStatus IcePAPAxis::getFastValueFromAxis(const char* var, const char *extra, 
 }
 
 /** Move the axis to a position, either absolute or relative
-  * \param[in] position in mm
-  * \param[in] relative (0=absolute, otherwise relative)
-  * \param[in] minimum velocity, mm/sec
-  * \param[in] maximum velocity, mm/sec
-  * \param[in] acceleration, seconds to maximum velocity
-  *
-  */
+ * \param[in] position in mm
+ * \param[in] relative (0=absolute, otherwise relative)
+ * \param[in] minimum velocity, mm/sec
+ * \param[in] maximum velocity, mm/sec
+ * \param[in] acceleration, seconds to maximum velocity
+ *
+ */
 asynStatus IcePAPAxis::move(double position, int relative, double minVelocity, double maxVelocity, double acceleration)
 {
   asynStatus status = asynSuccess;
@@ -341,12 +341,12 @@ asynStatus IcePAPAxis::move(double position, int relative, double minVelocity, d
 
 
 /** Home the motor, search the home position
-  * \param[in] minimum velocity, mm/sec
-  * \param[in] maximum velocity, mm/sec
-  * \param[in] acceleration, seconds to maximum velocity
-  * \param[in] forwards (0=backwards, otherwise forwards)
-  *
-  */
+ * \param[in] minimum velocity, mm/sec
+ * \param[in] maximum velocity, mm/sec
+ * \param[in] acceleration, seconds to maximum velocity
+ * \param[in] forwards (0=backwards, otherwise forwards)
+ *
+ */
 asynStatus IcePAPAxis::home(double minVelocity, double maxVelocity, double acceleration, int forwards)
 {
   asynStatus status = asynSuccess;
@@ -362,11 +362,11 @@ asynStatus IcePAPAxis::home(double minVelocity, double maxVelocity, double accel
 
 
 /** jog the the motor, search the home position
-  * \param[in] minimum velocity, mm/sec (not used)
-  * \param[in] maximum velocity, mm/sec (positive or negative)
-  * \param[in] acceleration, seconds to maximum velocity
-  *
-  */
+ * \param[in] minimum velocity, mm/sec (not used)
+ * \param[in] maximum velocity, mm/sec (positive or negative)
+ * \param[in] acceleration, seconds to maximum velocity
+ *
+ */
 asynStatus IcePAPAxis::moveVelocity(double minVelocity, double maxVelocity, double acceleration)
 {
   asynStatus status = asynSuccess;
@@ -376,29 +376,29 @@ asynStatus IcePAPAxis::moveVelocity(double minVelocity, double maxVelocity, doub
 
 
 /** Enable the amplifier on an axis
-  *
-  */
+ *
+ */
 asynStatus IcePAPAxis::enableAmplifier(int on)
 {
   return setValueOnAxis("POWER", on ? "ON" : "OFF");
 }
 
 /** Stop the axis
-  *
-  */
+ *
+ */
 asynStatus IcePAPAxis::stopAxisInternal(const char *function_name, double acceleration)
 {
   asynStatus status = setValueOnAxis("STOP"); /* Page 127 */
   if (status == asynSuccess) {
     asynPrint(pC_->pasynUserController_, ASYN_TRACE_INFO,
-	      "stopAxisInternal(%d) (%s)\n",  axisNo_, function_name);
+              "stopAxisInternal(%d) (%s)\n",  axisNo_, function_name);
   }
   return status;
 }
 
 /** Stop the axis, called by motor Record
-  *
-  */
+ *
+ */
 asynStatus IcePAPAxis::stop(double acceleration )
 {
   return stopAxisInternal(__FUNCTION__, acceleration);
@@ -406,10 +406,10 @@ asynStatus IcePAPAxis::stop(double acceleration )
 
 
 /** Polls the axis.
-  * This function reads the motor position, the limit status, the home status, the moving status,
-  * and the drive power-on status.
-  * and then calls callParamCallbacks() at the end.
-  * \param[out] moving A flag that is set indicating that the axis is moving (true) or done (false). */
+ * This function reads the motor position, the limit status, the home status, the moving status,
+ * and the drive power-on status.
+ * and then calls callParamCallbacks() at the end.
+ * \param[out] moving A flag that is set indicating that the axis is moving (true) or done (false). */
 asynStatus IcePAPAxis::poll(bool *moving)
 {
   st_axis_status_type st_axis_status;
@@ -417,7 +417,7 @@ asynStatus IcePAPAxis::poll(bool *moving)
   int nowMoving = 0;
   int nvals = 10110;
   int motor_axis_no = 0;
-  
+
   *pC_->outString_ = '\0';
   *pC_->inString_ = '\0';
   memset(&st_axis_status, 0, sizeof(st_axis_status));
@@ -427,9 +427,9 @@ asynStatus IcePAPAxis::poll(bool *moving)
   comStatus = pC_->writeReadController();
   if (comStatus) goto badpollall;
   nvals = sscanf(pC_->inString_,
-		 "%d:?STATUS %x",
-		 &motor_axis_no,
-		 &st_axis_status.status);
+                 "%d:?STATUS %x",
+                 &motor_axis_no,
+                 &st_axis_status.status);
   if (nvals != 2) goto badpollall;
   if (axisNo_ != motor_axis_no) goto badpollall;
   if (drvlocal.lastpoll.status != st_axis_status.status) {
@@ -471,7 +471,7 @@ asynStatus IcePAPAxis::poll(bool *moving)
   }
 
 
-  
+
   /* Phase 3: is motor moving */
   if (st_axis_status.status & (STATUS_BIT_MOVING | STATUS_BIT_SETTLING)) {
     nowMoving = 1;
@@ -492,7 +492,7 @@ asynStatus IcePAPAxis::poll(bool *moving)
     if (!comStatus) {
       if (!strncmp(homeencbuf, found_str, strlen(found_str))) {
         homed = 1;
-      } 
+      }
     }
     setIntegerParam(pC_->motorStatusHomed_, homed);
   }
@@ -500,7 +500,7 @@ asynStatus IcePAPAxis::poll(bool *moving)
   callParamCallbacks();
   return asynSuccess;
 
-badpollall:
+  badpollall:
   asynPrint(pC_->pasynUserController_, ASYN_TRACE_ERROR|ASYN_TRACEIO_DRIVER,
             "out=%s in=%s return=%s (%d)\n",
             pC_->outString_, pC_->inString_,
