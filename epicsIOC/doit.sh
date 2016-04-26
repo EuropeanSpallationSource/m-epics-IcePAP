@@ -2,12 +2,12 @@
 APPXX=IcePAP
 export APPXX
 
-BASH_ALIAS_EPICS=../../.epics.$(hostname)
-if ! test -r $BASH_ALIAS_EPICS; then
-    echo >&2 "Can not read $BASH_ALIAS_EPICS"
-    exit 1
-fi
-. $BASH_ALIAS_EPICS
+#BASH_ALIAS_EPICS=../../.epics.$(hostname)
+#if ! test -r $BASH_ALIAS_EPICS; then
+#    echo >&2 "Can not read $BASH_ALIAS_EPICS"
+#    exit 1
+#fi
+#. $BASH_ALIAS_EPICS
 
 if test -z "$EPICS_BASE";then
   echo >&2 "EPICS_BASE" is not set
@@ -59,6 +59,19 @@ elif test -d $EPICS_BASE/../modules/motor/db; then
   EPICS_MOTOR_DB=$EPICS_BASE/../modules/motor/db
 elif test -d $EPICS_BASE/../modules/motor/dbd; then
   EPICS_MOTOR_DB=$EPICS_BASE/../modules/motor/dbd
+elif test -n "$EPICS_BASES_PATH"; then
+   echo >&2 found: EPICS_BASES_PATH=$EPICS_BASES_PATH
+   echo >&2        EPICS_BASE=$EPICS_BASE
+   mybasever=$(echo $EPICS_BASE | sed -e "s!^$EPICS_BASES_PATH/base-!!")
+   echo >&2 mybasever=$mybasever
+   EPICS_MOTOR_DB=$EPICS_MODULES_PATH/motor/6.8.1/$mybasever/dbd
+   echo >&2 EPICS_MOTOR_DB=$EPICS_MOTOR_DB
+   if ! test -d "$EPICS_MOTOR_DB"; then
+     echo >&2 Not found EPICS_MOTOR_DB=$EPICS_MOTOR_DB
+     exit 1
+   fi
+   EPICS_EEE=y
+   export EPICS_EEE make_clean_uninstall
 else
    echo >&2 Not found: $EPICS_BASE/../modules/motor/[dD]b
    echo >&2 Unsupported EPICS_BASE:$EPICS_BASE
