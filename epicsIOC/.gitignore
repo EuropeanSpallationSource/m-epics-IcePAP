@@ -6,10 +6,13 @@ db/*.db
 IcePAPApp/Db/IcePAP.substitutions
 include/
 iocBoot/iocIcePAP/envPaths*
+iocBoot/iocIcePAP/st.cmd.centos*
 iocBoot/iocIcePAP/st.cmd.linux*
 iocBoot/iocIcePAP/st.cmd.darwin*
+iocBoot/iocIcePAP/st.cmd.*.EEE
 iocBoot/iocIcePAP/st.gdb.*
 iocBoot/iocIcePAP/xx
+
 lib/
 O.*/
 *.pyc
