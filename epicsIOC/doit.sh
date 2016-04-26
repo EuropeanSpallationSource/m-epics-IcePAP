@@ -5,7 +5,7 @@ export APPXX
 uname_s=$(uname -s 2>/dev/null || echo unknown)
 uname_m=$(uname -m 2>/dev/null || echo unknown)
 
-INSTALLED_EPICS=../.epics.$(hostname).$uname_s.$uname_m
+INSTALLED_EPICS=../../.epics.$(hostname).$uname_s.$uname_m
 
 if test -r $INSTALLED_EPICS; then
   echo INSTALLED_EPICS=$INSTALLED_EPICS
@@ -157,8 +157,8 @@ fi
       -e "s/__EPICS_HOST_ARCH/$EPICS_HOST_ARCH/" \
       -e "s/$APPXX,USER/$APPXX,$USER/" \
       -e "s/^cd /#cd /" \
-      -e "s/127.0.0.1:5024/$MOTORIP:$MOTORPORT/" |
-    grep -v '^  *#' >$stcmddst || {
+      -e "s/[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*:[0-9]*/$MOTORIP:$MOTORPORT/" |
+      grep -v '^  *#' >$stcmddst || {
       echo >&2 can not create stcmddst $stcmddst
       exit 1
     }
@@ -192,7 +192,7 @@ EOF
     cat st-start.epics st-main${MOTORCFG} st-end.epics |  \
       sed                                        \
       -e "s/__EPICS_HOST_ARCH/$EPICS_HOST_ARCH/" \
-      -e "s/127.0.0.1:5024/$MOTORIP:$MOTORPORT/" \
+      -e "s/[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*:[0-9]*/$MOTORIP:$MOTORPORT/" \
       | grep -v '^  *#' >$stcmddst &&
     chmod -w $stcmddst &&
     chmod +x $stcmddst &&
