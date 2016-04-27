@@ -32,8 +32,14 @@ makeCleanClean() {
   echo >&2 whitespace damage
   exit 2
 }
-MOTORIP=127.0.0.1
-MOTORPORT=5024
+
+if ifconfig | grep 192.168.11. >/dev/null; then
+  MOTORIP=192.168.11.10
+  MOTORPORT=5000
+else
+  MOTORIP=127.0.0.1
+  MOTORPORT=5024
+fi
 
 MOTORCFG=.default
 
