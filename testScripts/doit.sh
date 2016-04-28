@@ -1,5 +1,5 @@
 #!/bin/sh
-FILE=../../.epics
+FILE=../../.epics.$(hostname)
 if ! test -r $FILE; then
     echo >&2 "Can not read $FILE"
     exit 1
