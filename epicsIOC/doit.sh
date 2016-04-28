@@ -14,8 +14,13 @@ if test -z "$EPICS_BASE";then
   exit 1
 fi
 
-MOTORIP=127.0.0.1
-MOTORPORT=5024
+if ping -c 2 192.168.11.10 >/dev/null; then
+  MOTORIP=192.168.11.10
+  MOTORPORT=5000
+else
+  MOTORIP=127.0.0.1
+  MOTORPORT=5024
+fi
 
 if test -n "$1"; then
   # allow doit.sh host:port
