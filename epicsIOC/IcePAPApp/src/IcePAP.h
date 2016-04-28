@@ -44,6 +44,7 @@ private:
       const char *externalEncoderStr;
       int axisFlags;
     } cfg;
+    unsigned int lastCommandIsHoming;
   } drvlocal;
 
   void handleStatusChange(asynStatus status);
