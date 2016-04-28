@@ -150,24 +150,24 @@ class Test(unittest.TestCase):
                 tc_no, dialPosition, self.per10_dialPosition)
             assert calcAlmostEqual(self.m1, tc_no, destination, dialPosition, 2)
 
-    # Low soft limit JOGF + DIR
-    def test_TC_1315(self):
-        if (self.msta & self.MSTA_BIT_HOMED):
-            tc_no = "TC-1315-low-soft-limit JOGF DIR"
-            print '%s' % tc_no
-            saved_DIR = self.m1.get('DIR')
-            self.m1.put('DIR', 1)
-            jogDirection(self.m1, tc_no, 1, self.jogging_velocity, self.acceleration)
-
-            lvio = int(self.m1.get('LVIO'))
-            msta = int(self.m1.get('MSTA'))
-
-            self.assertEqual(0, msta & self.MSTA_BIT_PROBLEM,  'No Error MSTA.Problem JOGF DIR')
-            self.assertEqual(0, msta & self.MSTA_BIT_MINUS_LS, 'Minus hard limit not reached JOGF DIR')
-            self.assertEqual(0, msta & self.MSTA_BIT_PLUS_LS,  'Plus hard limit not reached JOGR DIR')
-            ### commit  4efe15e76cefdc060e14dbc3 needed self.assertEqual(1, lvio, 'LVIO == 1 JOGF')
-            self.m1.put('JOGF', 0)
-            self.m1.put('DIR', saved_DIR)
+#    # Low soft limit JOGF + DIR
+#    def test_TC_1315(self):
+#        if (self.msta & self.MSTA_BIT_HOMED):
+#            tc_no = "TC-1315-low-soft-limit JOGF DIR"
+#            print '%s' % tc_no
+#            saved_DIR = self.m1.get('DIR')
+#            self.m1.put('DIR', 1)
+#            jogDirection(self.m1, tc_no, 1, self.jogging_velocity, self.acceleration)
+#
+#            lvio = int(self.m1.get('LVIO'))
+#            msta = int(self.m1.get('MSTA'))
+#
+#            self.assertEqual(0, msta & self.MSTA_BIT_PROBLEM,  'No Error MSTA.Problem JOGF DIR')
+#            self.assertEqual(0, msta & self.MSTA_BIT_MINUS_LS, 'Minus hard limit not reached JOGF DIR')
+#            self.assertEqual(0, msta & self.MSTA_BIT_PLUS_LS,  'Plus hard limit not reached JOGR DIR')
+#            ### commit  4efe15e76cefdc060e14dbc3 needed self.assertEqual(1, lvio, 'LVIO == 1 JOGF')
+#            self.m1.put('JOGF', 0)
+#            self.m1.put('DIR', saved_DIR)
 
 
 
