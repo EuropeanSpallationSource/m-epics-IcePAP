@@ -18,7 +18,7 @@ import time
 ###
 
 device = "IOC"
-motor  = "m1"
+motor  = "m2"
 polltime = 0.2
 
 # Default device and motor name
