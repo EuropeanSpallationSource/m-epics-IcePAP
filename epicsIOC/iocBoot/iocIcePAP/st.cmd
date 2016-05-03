@@ -51,8 +51,6 @@ asynSetTraceInfoMask("MC_CPU1", -1, 15)
 
 #IcePAPCreateAxis("MCU1", "1", "2", "encoder=MEASURE")
 IcePAPCreateAxis("MCU1", "2", "2", "encoder=MEASURE")
-#IcePAPCreateAxis("MCU1", "3", "2", "encoder=MEASURE")
-#IcePAPCreateAxis("MCU1", "4", "2", "encoder=MEASURE")
 
 cd ${TOP}/iocBoot/${IOC}
 iocInit
