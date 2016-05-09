@@ -33,8 +33,8 @@ static void init(void)
     setMotorReverseERES(axis_no, 1.0);
     setMotorParkingPosition(axis_no, 1); /* steps */
     setMaxHomeVelocityAbs(axis_no, 66);  /* 200 steps/sec in IcePAP */
-    setLowHardLimitPos(axis_no, -1.0 * ReverseMRES);
-    setHighHardLimitPos(axis_no, 173.0 * ReverseMRES);
+    setLowHardLimitPos(axis_no, -180.0 * ReverseMRES);
+    setHighHardLimitPos(axis_no, 2.0 * ReverseMRES);
   }
 }
 
