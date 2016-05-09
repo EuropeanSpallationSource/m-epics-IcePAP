@@ -1,8 +1,11 @@
 #!/bin/sh
 APPXX=IcePAP
 export APPXX
+uname_s=$(uname -s 2>/dev/null || echo unknown)
+uname_m=$(uname -m 2>/dev/null || echo unknown)
 
-BASH_ALIAS_EPICS=../../.epics.$(hostname)
+BASH_ALIAS_EPICS=../../.epics.$(hostname).$uname_s.$uname_m
+
 if ! test -r $BASH_ALIAS_EPICS; then
     echo >&2 "Can not read $BASH_ALIAS_EPICS"
     exit 1
