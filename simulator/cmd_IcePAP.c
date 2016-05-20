@@ -184,6 +184,20 @@ static int handle_IcePAP_cmd3(const char *myarg_1, const char *myarg_2)
       return ret; /* MOVE does respond */
     }
   }
+  if (0 == strcmp(myarg_1, "RMOVE")) {
+    nvals = sscanf(myarg_2, "%d", &value);
+    LOGINFO5("%s/%s:%d res=%d\n",
+             __FILE__, __FUNCTION__, __LINE__,
+             nvals);
+    if (nvals == 1) {
+      movePosition(motor_axis_no,
+                   (double)value,
+                   1, /* int relative, */
+                   cmd_Motor_cmd[motor_axis_no].velocity,
+                   1.0 /*double acceleration */ );
+      return ret; /* MOVE does respond */
+    }
+  }
   if (0 == strcmp(myarg_1, "VELOCITY")) {
     nvals = sscanf(myarg_2, "%d", &value);
     LOGINFO5("%s/%s:%d res=%d\n",
