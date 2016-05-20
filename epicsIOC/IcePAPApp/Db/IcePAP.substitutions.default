@@ -1,8 +1,8 @@
 file "IcePAP.template"
 {
 pattern
-{P,       N,  M,      DTYP,         PORT,     ADDR,  DESC,          EGU, DIR,  VELO, JVEL,  VBAS,  ACCL,  BDST, DLY,  BVEL,  BACC,  MRES,  ERES, PREC,  DLLM,  DHLM,  INIT}
-{"$(P)",  1,  $(M1),  "asynMotor",  $(PORT),  1,     "motor $(N)",  mm,  Pos,  25,   10,    2,     1,     0,    0,    1,     .2,    0.03,  0.03, 3,     -165,  -13,    ""}
-{"$(P)",  2,  $(M2),  "asynMotor",  $(PORT),  2,     "motor $(N)",  mm,  Pos,  25,   10,    2,     1,     0,    0,    1,     .2,    0.03,  0.03, 3,     -165,  -13,    ""}
+{P,       N, M,      R,      DTYP,         PORT,     ADDR,  DESC,          EGU, DIR,  VELO, JVEL,  VBAS,  ACCL,  BDST, DLY,  BVEL,  BACC,  MRES,  ERES, PREC,  DLLM,  DHLM,  INIT}
+{"$(P)",  1, $(M1),  $(M1)-, "asynMotor",  $(PORT),  1,     "motor $(N)",  mm,  Pos,  25,   10,    2,     1,     0,    0,    1,     .2,    0.03,  0.03, 3,     -165,  -13,    ""}
+{"$(P)",  2, $(M2),  $(M1)-, "asynMotor",  $(PORT),  2,     "motor $(N)",  mm,  Pos,  25,   10,    2,     1,     0,    0,    1,     .2,    0.03,  0.03, 3,     -165,  -13,    ""}
 }
 
