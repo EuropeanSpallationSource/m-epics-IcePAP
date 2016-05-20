@@ -14,6 +14,7 @@ record(motor,"$(P)$(M)")
 	field(OUT,"@asyn($(PORT),$(ADDR))")
 	field(MRES,"$(MRES)")
 	field(ERES,"$(ERES)")
+	field(RRES,"$(RRES)")
 	field(PREC,"$(PREC)")
 	field(EGU,"$(EGU)")
 	field(DHLM,"$(DHLM)")
@@ -32,21 +33,10 @@ grecord(ai,"$(P)$(M)READBACK") {
     field(INP,"@asyn($(PORT),$(ADDR))MOTOR_POSITION")
 }
 
-# Motor resolution for this axis
-record(ao,"$(P)$(R)MRES_") {
-    field(DESC, "$(M) resolution")
-    field(DOL,  "$(P)$(M).MRES CP MS")
-    field(OMSL, "closed_loop")
-    field(DTYP, "asynFloat64")
-    field(OUT,  "@asyn($(PORT),$(ADDR))MOTOR_REC_RESOLUTION")
-    field(PREC, "$(PREC)")
-}
-
 record(calcout, "$(P)$(R)Pos-RB_") {
 	field(DESC,"Encoder Readback")
-	field(CALC,"A * B * 1.05")
+	field(CALC,"A * 1.05")
 	field(INPA,"$(P)$(M)READBACK CP MS")
-	field(INPB,"$(P)$(R)MRES_ CP MS")
 }
 
 record (asyn, "$(P)$(PORT):asyn")
