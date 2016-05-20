@@ -16,6 +16,8 @@ record(motor,"$(P)$(M)")
 	field(ERES,"$(ERES)")
 	field(RRES,"$(RRES)")
 	field(RDBL, "$(P)$(R)Pos-RB_ PP MS")
+	field(RDBD,"$(RDBD)")
+	field(RTRY,"$(RTRY)")
 	field(PREC,"$(PREC)")
 	field(EGU,"$(EGU)")
 	field(DHLM,"$(DHLM)")
@@ -36,7 +38,7 @@ grecord(ai,"$(P)$(M)READBACK") {
 
 record(calcout, "$(P)$(R)Pos-RB_") {
 	field(DESC,"Encoder Readback")
-	field(CALC,"A * 1.05")
+	field(CALC,"A * 1.10")
 	field(INPA,"$(P)$(M)READBACK CP MS")
 }
 
