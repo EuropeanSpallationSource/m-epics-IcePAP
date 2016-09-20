@@ -432,20 +432,6 @@ asynStatus IcePAPAxis::poll(bool *moving)
 		 &st_axis_status.status);
   if (nvals != 2) goto badpollall;
   if (axisNo_ != motor_axis_no) goto badpollall;
-  if (drvlocal.lastpoll.status != st_axis_status.status) {
-    unsigned int status = st_axis_status.status;
-    asynPrint(pC_->pasynUserController_, ASYN_TRACE_INFO,
-              "poll(%d) line=%d status=0x%x %s%s%s%s%s%s%s\n",
-              axisNo_, __LINE__, st_axis_status.status,
-              status & STATUS_BIT_READY ?     "READY " : "      ",
-              status & STATUS_BIT_MOVING ?    "MOVIN " : "      ",
-              status & STATUS_BIT_SETTLING ?  "SETTL " : "      ",
-              status & STATUS_BIT_POWERON ?   "PWR-ON  " : "PWR-OFF ",
-              status & STATUS_BIT_LIMIT_POS ? "LIM-P " : " ",
-              status & STATUS_BIT_LIMIT_NEG ? "LIM-N " : " ",
-              status & STATUS_BIT_HSIGNAL ?   "HOME  " : " ");
-    drvlocal.lastpoll.status = st_axis_status.status;
-  }
   setIntegerParam(pC_->motorStatusProblem_, 0); //st_axis_status.status & STATUS_BITS_DISABLE);
   setIntegerParam(pC_->motorStatusAtHome_, st_axis_status.status & STATUS_BIT_HSIGNAL);
   setIntegerParam(pC_->motorStatusLowLimit_, st_axis_status.status & STATUS_BIT_LIMIT_NEG);
@@ -455,6 +441,21 @@ asynStatus IcePAPAxis::poll(bool *moving)
   /* Phase 2: read the Axis (readback) position */
   comStatus = getFastValueFromAxis("FPOS", "", &st_axis_status.motorPosition);
   if (comStatus) goto badpollall;
+  if (drvlocal.lastpoll.status != st_axis_status.status) {
+    unsigned int status = st_axis_status.status;
+    asynPrint(pC_->pasynUserController_, ASYN_TRACE_INFO,
+              "poll(%d) pos=%04d status=0x%x %s%s%s%s%s%s%s\n",
+              axisNo_, st_axis_status.motorPosition,
+              st_axis_status.status,
+              status & STATUS_BIT_READY ?     "READY " : "      ",
+              status & STATUS_BIT_MOVING ?    "MOVIN " : "      ",
+              status & STATUS_BIT_SETTLING ?  "SETTL " : "      ",
+              status & STATUS_BIT_POWERON ?   "PWR-ON  " : "PWR-OFF ",
+              status & STATUS_BIT_LIMIT_POS ? "LIM-P " : " ",
+              status & STATUS_BIT_LIMIT_NEG ? "LIM-N " : " ",
+              status & STATUS_BIT_HSIGNAL ?   "HOME  " : " ");
+    drvlocal.lastpoll.status = st_axis_status.status;
+  }
   /* Use previous motorPosition and current motorPosition to calculate direction.*/
   if (st_axis_status.motorPosition > drvlocal.lastpoll.motorPosition) {
     setIntegerParam(pC_->motorStatusDirection_, 1);
