@@ -51,7 +51,11 @@ static motor_axis_type motor_axis_reported[MAX_AXES];
 static double getEncoderPosFromMotorPos(int axis_no, double MotorPosNow)
 {
   (void)axis_no;
+#if 0
   return (MotorPosNow - motor_axis[axis_no].ParkingPos) * motor_axis[axis_no].ReverseERES;
+#else
+  return MotorPosNow;
+#endif
 }
 
 #if 0
