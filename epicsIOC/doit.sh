@@ -9,7 +9,10 @@ BASH_ALIAS_EPICS=../../.epics.$(hostname).$uname_s.$uname_m
 if ! test -r $BASH_ALIAS_EPICS; then
     echo >&2 "Can not read $BASH_ALIAS_EPICS"
     exit 1
+else 
+    echo >&2 "Using $BASH_ALIAS_EPICS"
 fi
+
 . $BASH_ALIAS_EPICS
 
 if test -z "$EPICS_BASE";then
