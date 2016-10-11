@@ -32,12 +32,13 @@ if test -n "$1"; then
   # allow doit.sh host:port
   PORT=${1##*:}
   HOST=${1%:*}
+  MOTORIP=$HOST
   echo HOST=$HOST PORT=$PORT
   if test "$PORT" != "$HOST"; then
     MOTORPORT=$PORT
   fi
-  echo HOST=$HOST MOTORPORT=$MOTORPORT
   echo MOTORIP=$MOTORIP
+  echo MOTORPORT=$MOTORPORT
 fi
 export MOTORIP MOTORPORT
 uname_m=$(uname -m)
