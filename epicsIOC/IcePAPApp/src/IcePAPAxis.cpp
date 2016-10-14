@@ -27,7 +27,7 @@ FILENAME... IcePAPAxis.cpp
 #define STATUS_BIT_READY     (1<<9)
 #define STATUS_BIT_MOVING    (1<<10)
 #define STATUS_BIT_SETTLING  (1<<11)
-#define STATUS_BIT_12        (1<<12)
+#define STATUS_BIT_OUTOFWIN  (1<<12)
 #define STATUS_BIT_13        (1<<13)
 #define STATUS_BIT_14        (1<<14)
 #define STATUS_BIT_15        (1<<15)
@@ -437,11 +437,12 @@ asynStatus IcePAPAxis::poll(bool *moving)
   if (drvlocal.lastpoll.status != st_axis_status.status) {
     unsigned int status = st_axis_status.status;
     asynPrint(pC_->pasynUserController_, ASYN_TRACE_INFO,
-              "poll(%d) line=%d status=0x%x %s%s%s%s%s%s%s\n",
+              "poll(%d) line=%d status=0x%x %s%s%s%s%s%s%s%s\n",
               axisNo_, __LINE__, st_axis_status.status,
               status & STATUS_BIT_READY ?     "READY " : "      ",
               status & STATUS_BIT_MOVING ?    "MOVIN " : "      ",
               status & STATUS_BIT_SETTLING ?  "SETTL " : "      ",
+              status & STATUS_BIT_OUTOFWIN ?  "OOWIN " : "      ",
               status & STATUS_BIT_POWERON ?   "PWR-ON  " : "PWR-OFF ",
               status & STATUS_BIT_LIMIT_POS ? "LIM-P " : " ",
               status & STATUS_BIT_LIMIT_NEG ? "LIM-N " : " ",
