@@ -169,7 +169,17 @@ void IcePAPAxis::report(FILE *fp, int level)
   */
 asynStatus IcePAPAxis::writeReadACK(void)
 {
-  asynStatus status = pC_->writeReadOnErrorDisconnect();
+  asynStatus status;
+  int eemcuErr = 0;
+  status = pC_->getIntegerParam(axisNo_, pC_->eemcuErr_, &eemcuErr);
+  if (status || eemcuErr) {
+   asynPrint(pC_->pasynUserController_, ASYN_TRACE_ERROR|ASYN_TRACEIO_DRIVER,
+             "eemcuErr=%d status=%s (%d)\n",
+             eemcuErr,
+             pasynManager->strStatus(status), (int)status);
+        return status;
+  }
+  status = pC_->writeReadOnErrorDisconnect();
   switch (status) {
     case asynError:
       return status;
@@ -180,6 +190,9 @@ asynStatus IcePAPAxis::writeReadACK(void)
                   "out=%s in=%s return=%s (%d)\n",
                   pC_->outString_, pC_->inString_,
                   pasynManager->strStatus(status), (int)status);
+	setIntegerParam(pC_->eemcuErr_, 1);
+        setStringParam(pC_->eemcuErrMsg_, pC_->inString_);
+
         return status;
       }
     default:
@@ -381,6 +394,9 @@ asynStatus IcePAPAxis::moveVelocity(double minVelocity, double maxVelocity, doub
 asynStatus IcePAPAxis::resetAxis(void)
 {
   asynStatus status = asynSuccess;
+  setIntegerParam(pC_->eemcuErr_, 0);
+  setStringParam(pC_->eemcuErrMsg_, "");
+
   return status;
 }
 
