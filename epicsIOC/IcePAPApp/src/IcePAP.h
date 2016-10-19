@@ -5,12 +5,14 @@ FILENAME...   IcePAP.h
 #include "asynMotorController.h"
 #include "asynMotorAxis.h"
 
-// No controller-specific parameters yet
-#define NUM_VIRTUAL_MOTOR_PARAMS 0  
-
 #define AMPLIFIER_ON_FLAG_CREATE_AXIS  (1)
 #define AMPLIFIER_ON_FLAG_WHEN_HOMING  (1<<1)
 #define AMPLIFIER_ON_FLAG_USING_CNEN   (1<<2)
+
+#define eemcuErrString                  "Err"
+#define eemcuErrIdString                "ErrId"
+#define eemcuErrRstString               "ErrRst"
+#define eemcuErrMsgString               "ErrMsg"
 
 extern "C" {
   int IcePAPCreateAxis(const char *IcePAPName, int axisNo,
@@ -20,6 +22,7 @@ extern "C" {
 typedef struct {
   unsigned int status;
   int          motorPosition;
+  char         errbuf[256];
 } st_axis_status_type;
 
 class epicsShareClass IcePAPAxis : public asynMotorAxis
@@ -45,6 +48,7 @@ private:
       int axisFlags;
     } cfg;
     unsigned int lastCommandIsHoming;
+    char errbuf[256];
   } drvlocal;
 
   void handleStatusChange(asynStatus status);
@@ -58,8 +62,10 @@ private:
   asynStatus getValueFromAxis(const char* var, int *value);
   asynStatus getFastValueFromAxis(const char* var, const char *extra, int *value);
 
+  asynStatus resetAxis(void);
   asynStatus enableAmplifier(int);
   asynStatus setIntegerParam(int function, int value);
+  asynStatus setStringParam(int function, const char *value);
   asynStatus stopAxisInternal(const char *function_name, double acceleration);
 
   friend class IcePAPController;
@@ -78,6 +84,20 @@ public:
   protected:
   void handleStatusChange(asynStatus status);
   asynStatus writeInt32(asynUser *pasynUser, epicsInt32 value);
+
+  /* First parameter */
+  int eemcuErr_;
+
+  /* Add parameters here */
+
+  int eemcuErrMsg_;
+  int eemcuErrRst_;
+  int eemcuErrId_;
+  /* Last parameter */
+
+  #define FIRST_VIRTUAL_PARAM eemcuErr_
+  #define LAST_VIRTUAL_PARAM eemcuErrId_
+  #define NUM_VIRTUAL_MOTOR_PARAMS ((int) (&LAST_VIRTUAL_PARAM - &FIRST_VIRTUAL_PARAM + 1))
 
   friend class IcePAPAxis;
 };

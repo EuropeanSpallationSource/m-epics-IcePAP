@@ -73,6 +73,7 @@ IcePAPAxis::IcePAPAxis(IcePAPController *pC, int axisNo,
     pC_(pC)
 {
   memset(&drvlocal, 0, sizeof(drvlocal));
+  drvlocal.errbuf[1] = ' '; /* trigger setStringParam(pC_->eemcuErrMsg_ */
   drvlocal.cfg.axisFlags = axisFlags;
   if (axisFlags & AMPLIFIER_ON_FLAG_USING_CNEN) {
     setIntegerParam(pC->motorStatusGainSupport_, 1);
@@ -377,6 +378,12 @@ asynStatus IcePAPAxis::moveVelocity(double minVelocity, double maxVelocity, doub
 }
 
 
+asynStatus IcePAPAxis::resetAxis(void)
+{
+  asynStatus status = asynSuccess;
+  return status;
+}
+
 /** Enable the amplifier on an axis
   *
   */
@@ -506,6 +513,13 @@ asynStatus IcePAPAxis::poll(bool *moving)
     setIntegerParam(pC_->motorStatusHomed_, homed);
   }
 
+  if (memcmp(st_axis_status.errbuf, drvlocal.errbuf, sizeof(drvlocal.errbuf))) {
+    setIntegerParam(pC_->eemcuErr_, 0);
+    setIntegerParam(pC_->eemcuErrId_, 0);
+    setStringParam(pC_->eemcuErrMsg_, st_axis_status.errbuf);
+    memcpy(drvlocal.errbuf, st_axis_status.errbuf, sizeof(drvlocal.errbuf));
+  }
+
   callParamCallbacks();
   return asynSuccess;
 
@@ -527,10 +541,32 @@ asynStatus IcePAPAxis::setIntegerParam(int function, int value)
     if (drvlocal.cfg.axisFlags & AMPLIFIER_ON_FLAG_USING_CNEN) {
       (void)enableAmplifier(value);
     }
+#ifdef eemcuErrRstString
+  } else if (function == pC_->eemcuErrRst_) {
+    asynPrint(pC_->pasynUserController_, ASYN_TRACE_INFO,
+              "setIntegerParam(%d ErrRst_)=%d\n", axisNo_, value);
+    if (value) {
+      resetAxis();
+    }
   }
+#endif
 
   //Call base class method
   status = asynMotorAxis::setIntegerParam(function, value);
   return status;
 }
 
+asynStatus IcePAPAxis::setStringParam(int function, const char *value)
+{
+  asynStatus status = asynSuccess;
+#ifdef eemcuErrMsgString
+  if (function == pC_->eemcuErrMsg_) {
+    asynPrint(pC_->pasynUserController_, ASYN_TRACE_INFO,
+              "setStringParam(%d eemcuErrMsg_)=%s\n", axisNo_, value);
+  }
+#endif
+
+  /* Call base class method */
+  status = asynMotorAxis::setStringParam(function, value);
+  return status;
+}
