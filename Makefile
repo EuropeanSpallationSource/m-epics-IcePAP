@@ -1,10 +1,16 @@
-include ${EPICS_ENV_PATH}/module.Makefile
+#Use either the Makefile for EPICS, or the one for
+# ESS EPICS ENVIRONMENT
 
-EXCLUDE_ARCHS += eldk
-
-
-HEADERS += epicsIOC/IcePAPApp/src/IcePAP.h
-
-SOURCES +=  epicsIOC/IcePAPApp/src/IcePAPAxis.cpp
-SOURCES +=  epicsIOC/IcePAPApp/src/IcePAPController.cpp
-SOURCES +=  epicsIOC/IcePAPApp/src/IcePAPMain.cpp
+ifdef EPICS_ENV_PATH
+ifeq ($(EPICS_MODULES_PATH),/opt/epics/modules)
+ifeq ($(EPICS_BASES_PATH),/opt/epics/bases)
+include Makefile.EEE
+else
+include Makefile.epics
+endif
+else
+include Makefile.epics
+endif
+else
+include Makefile.epics
+endif
