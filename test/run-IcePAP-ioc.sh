@@ -85,7 +85,8 @@ export MOTORIP MOTORPORT
     done &&
     rm -f $stcmddst &&
     sed  <st${MOTORCFG}.cmd  \
-      -e "s/require axis.*/require axis,$USER/" \
+      -e "s/require axisCore,USER/require axis,$USER/" \
+      -e "s/require IcePAP,USER/require IcePAP,$USER/" \
       -e "s/^cd /#cd /" \
       -e "s/127.0.0.1/$MOTORIP/" \
       -e "s/5000/$MOTORPORT/" |

@@ -11,10 +11,10 @@ USR_DEPENDENCIES += axisCore,10.2.0
 
 
 SOURCES = \
-  IcePAP/src/IcePAPAxis.cpp \
-  IcePAP/src/IcePAPController.cpp \
-  IcePAP/src/IcePAPMain.cpp
+  IcePAPApp/src/IcePAPAxis.cpp \
+  IcePAPApp/src/IcePAPController.cpp \
+  IcePAPApp/src/IcePAPMain.cpp
 
-TEMPLATES = -none-
+TEMPLATES = IcePAPApp/Db/IcePAP.template
 
 #MISCS = \
