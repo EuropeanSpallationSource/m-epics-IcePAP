@@ -43,6 +43,11 @@ IcePAPController::IcePAPController(const char *portName, const char *MotorPortNa
   createParam(EthercatMCAcc_RBString,        asynParamFloat64,     &EthercatMCAcc_RB_);
   createParam(EthercatMCDec_RBString,        asynParamFloat64,     &EthercatMCDec_RB_);
 
+  createParam(EthercatMCCHLMString,          asynParamFloat64,     &EthercatMCCHLM_);
+  createParam(EthercatMCCLLMString,          asynParamFloat64,     &EthercatMCCLLM_);
+  createParam(EthercatMCCHLM_EnString,       asynParamInt32,       &EthercatMCCHLM_En_);
+  createParam(EthercatMCCLLM_EnString,       asynParamInt32,       &EthercatMCCLLM_En_);
+
   createParam(EthercatMCErrRstString,        asynParamInt32,       &EthercatMCErrRst_);
   /* Connect to IcePAP controller */
   status = pasynOctetSyncIO->connect(MotorPortName, 0, &pasynUserController_, NULL);

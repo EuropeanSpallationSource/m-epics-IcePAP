@@ -15,6 +15,10 @@ FILENAME...   IcePAP.h
 #define EthercatMCVel_RBString               "Vel-RB"
 #define EthercatMCAcc_RBString               "Acc-RB"
 #define EthercatMCDec_RBString               "Dec-RB"
+#define EthercatMCCHLMString                 "ECHLM"
+#define EthercatMCCLLMString                 "ECLLM"
+#define EthercatMCCHLM_EnString              "ECHLM-En"
+#define EthercatMCCLLM_EnString              "ECLLM-En"
 
 extern "C" {
   int IcePAPCreateAxis(const char *IcePAPName, int axisNo,
@@ -66,7 +70,7 @@ private:
 
   asynStatus getValueFromAxis(const char* var, unsigned, char *value);
   asynStatus getValueFromAxis(const char* var, int *value);
-  asynStatus getValidValueFromAxisPrint(const char* var, int *valid, int *value);
+  asynStatus getVconfigFromAxis(const char* var, int *valid, int *value);
   asynStatus getValueFromAxis(const char* var, double *value);
   asynStatus readBackVelAcc(void);
   asynStatus readBackSoftLimits(void);
@@ -107,8 +111,12 @@ public:
   int EthercatMCVel_RB_;
   int EthercatMCAcc_RB_;
   int EthercatMCDec_RB_;
-  int EthercatMCErrRst_;
+  int EthercatMCCHLM_;
+  int EthercatMCCLLM_;
+  int EthercatMCCHLM_En_;
+  int EthercatMCCLLM_En_;
   /* Last parameter */
+  int EthercatMCErrRst_;
 
   #define FIRST_VIRTUAL_PARAM EthercatMCErr_
   #define LAST_VIRTUAL_PARAM EthercatMCErrRst_

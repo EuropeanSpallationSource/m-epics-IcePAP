@@ -80,6 +80,37 @@ record(ai, "$(PREFIX)$(R)Dec-RB")
     field(SCAN, "I/O Intr")
 }
 
+record(ai,"$(PREFIX)$(R)ECHLM-RB") {
+    field(DESC, "EC High Soft Limit RB")
+    field(DTYP, "asynFloat64")
+    field(PREC,"$(PREC)")
+    field(INP,"@asyn($(MOTOR_PORT),$(AXIS_NO))ECHLM")
+    field(SCAN, "I/O Intr")
+}
+
+record(ai,"$(PREFIX)$(R)ECLLM-RB") {
+    field(DESC, "EC Low Soft Limit RB")
+    field(DTYP, "asynFloat64")
+    field(PREC,"$(PREC)")
+    field(INP,"@asyn($(MOTOR_PORT),$(AXIS_NO))ECLLM")
+    field(SCAN, "I/O Intr")
+}
+
+record(longin,"$(PREFIX)$(R)ECHLM-En-RB") {
+    field(DESC, "EC High Soft Limit enabled RB")
+    field(DTYP, "asynInt32")
+    field(INP,"@asyn($(MOTOR_PORT),$(AXIS_NO))ECHLM-En")
+    field(SCAN, "I/O Intr")
+}
+
+record(longin,"$(PREFIX)$(R)ECLLM-En-RB") {
+    field(DESC, "EC Low Soft Limit enabled RB")
+    field(DTYP, "asynInt32")
+    field(INP,"@asyn($(MOTOR_PORT),$(AXIS_NO))ECLLM-En")
+    field(SCAN, "I/O Intr")
+}
+
+
 record(longout,"$(PREFIX)$(R)ErrRst") {
     field(DESC, "Error Reset")
     field(VAL,  0)

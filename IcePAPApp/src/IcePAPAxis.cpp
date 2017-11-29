@@ -312,7 +312,7 @@ asynStatus IcePAPAxis::getValueFromAxis(const char* var, int *value)
  * \param[in] pointer to the integer result
  *
  */
-asynStatus IcePAPAxis::getValidValueFromAxisPrint(const char* var, int *valid, int *value)
+asynStatus IcePAPAxis::getVconfigFromAxis(const char* var, int *valid, int *value)
 {
   asynStatus comStatus;
   int res;
@@ -439,23 +439,22 @@ asynStatus IcePAPAxis::readBackSoftLimits(void)
   int iValueHigh = 0, iValueLow = 0;
 
   /* High limit */
-  status = getValidValueFromAxisPrint("MAXPOS", &iValidHigh, &iValueHigh);
+  status = getVconfigFromAxis("MAXPOS", &iValidHigh, &iValueHigh);
   if (status == asynSuccess) {
     /* Low limit */
-    status = getValidValueFromAxisPrint("MINPOS", &iValidLow, &iValueLow);
+    status = getVconfigFromAxis("MINPOS", &iValidLow, &iValueLow);
   }
   if (status != asynSuccess) {
     /* Communication problem, set everything to 0 */
     iValueHigh = iValueLow = 0;
    }
-#if 0
   /* EthercatMCCHLMXX are info(asyn:READBACK,"1"),
      so we must use pC_->setXXX(axisNo_..)  here */
-  pC_->setIntegerParam(axisNo_, pC_->EthercatMCCHLM_En_, iValueHigh);
-  pC_->setDoubleParam(axisNo_, pC_->EthercatMCCHLM_, fValueHigh);
-  pC_->setIntegerParam(axisNo_, pC_->EthercatMCCLLM_En_, iValueLow);
-  pC_->setDoubleParam(axisNo_, pC_->EthercatMCCLLM_, fValueLow);
-#endif
+  pC_->setIntegerParam(axisNo_, pC_->EthercatMCCHLM_En_, iValidHigh);
+  pC_->setDoubleParam(axisNo_, pC_->EthercatMCCHLM_, iValueHigh);
+  pC_->setIntegerParam(axisNo_, pC_->EthercatMCCLLM_En_, iValidLow);
+  pC_->setDoubleParam(axisNo_, pC_->EthercatMCCLLM_, iValueLow);
+
   if (!iValidHigh || !iValidLow || iValueLow >= iValueHigh) {
     iValueHigh = iValueLow = 0;
   }
