@@ -46,6 +46,10 @@ private:
   struct {
     st_axis_status_type lastpoll;
     struct {
+      unsigned int initialUpdate    :1;
+    }  dirty;
+
+    struct {
       const char *externalEncoderStr;
       int axisFlags;
     } cfg;
@@ -62,8 +66,11 @@ private:
 
   asynStatus getValueFromAxis(const char* var, unsigned, char *value);
   asynStatus getValueFromAxis(const char* var, int *value);
+  asynStatus getValidValueFromAxisPrint(const char* var, int *valid, int *value);
   asynStatus getValueFromAxis(const char* var, double *value);
   asynStatus readBackVelAcc(void);
+  asynStatus readBackSoftLimits(void);
+  asynStatus initialUpdate(void);
   asynStatus getFastValueFromAxis(const char* var, const char *extra, int *value);
 
   asynStatus resetAxis(void);

@@ -56,6 +56,8 @@
 #define STATUS_BIT_30        (1<<30)
 #define STATUS_BIT_31        (1<<31)
 
+const static char *const modulName = "IcePAPAxis::";
+
 //
 // These are the IcePAPAxis methods
 //
@@ -73,6 +75,7 @@ IcePAPAxis::IcePAPAxis(IcePAPController *pC, int axisNo,
     pC_(pC)
 {
   memset(&drvlocal, 0, sizeof(drvlocal));
+  memset(&drvlocal.dirty, 0xFF, sizeof(drvlocal.dirty));
   drvlocal.errbuf[1] = ' '; /* trigger setStringParam(pC_->EthercatMCErrMsg_ */
   drvlocal.cfg.axisFlags = axisFlags;
   if (axisFlags & AMPLIFIER_ON_FLAG_USING_CNEN) {
@@ -133,6 +136,7 @@ void IcePAPAxis::handleStatusChange(asynStatus newStatus)
             "IcePAPAxis::handleStatusChange status=%s (%d)\n",
             pasynManager->strStatus(newStatus), (int)newStatus);
   if (newStatus == asynSuccess) {
+    readBackSoftLimits();
     if (drvlocal.cfg.axisFlags & AMPLIFIER_ON_FLAG_CREATE_AXIS) {
       /* Enable the amplifier when the axis is created,
          but wait until we have a connection to the controller.
@@ -308,6 +312,43 @@ asynStatus IcePAPAxis::getValueFromAxis(const char* var, int *value)
  * \param[in] pointer to the integer result
  *
  */
+asynStatus IcePAPAxis::getValidValueFromAxisPrint(const char* var, int *valid, int *value)
+{
+  asynStatus comStatus;
+  int res;
+
+  sprintf(pC_->outString_, "%d:?VCONFIG %s", axisNo_, var);
+  comStatus = pC_->writeReadOnErrorDisconnect();
+  if (comStatus) {
+    return comStatus;
+  } else {
+    char format_string[128];
+    int nvals;
+    snprintf(format_string, sizeof(format_string), "%d:?VCONFIG NONE", axisNo_);
+    asynPrint(pC_->pasynUserController_, ASYN_TRACE_INFO,
+              "out=\"%s\" in=\"%s\"\n",
+              pC_->outString_, pC_->inString_);
+    if (!strcmp(pC_->inString_, format_string)) {
+      *valid = 0;
+      return asynSuccess;
+    }
+    /* Scan for a decimal number */
+    snprintf(format_string, sizeof(format_string),"%d:?VCONFIG %%d", axisNo_);
+    nvals = sscanf(pC_->inString_, format_string, &res);
+    if (nvals != 1) {
+      return asynError;
+    }
+  }
+  *valid = 1;
+  *value = res;
+  return asynSuccess;
+}
+
+/** Gets an integer or boolean value from an axis
+ * \param[in] name of the variable to be retrieved
+ * \param[in] pointer to the integer result
+ *
+ */
 asynStatus IcePAPAxis::getFastValueFromAxis(const char* var, const char *extra, int *value)
 {
   char format_string[100];
@@ -389,6 +430,50 @@ asynStatus IcePAPAxis::readBackVelAcc(void)
   setDoubleParam(pC_->EthercatMCDec_RB_, acc);
   return status;
 }
+
+
+asynStatus IcePAPAxis::readBackSoftLimits(void)
+{
+  asynStatus status;
+  int iValidHigh = 0, iValidLow = 0;
+  int iValueHigh = 0, iValueLow = 0;
+
+  /* High limit */
+  status = getValidValueFromAxisPrint("MAXPOS", &iValidHigh, &iValueHigh);
+  if (status == asynSuccess) {
+    /* Low limit */
+    status = getValidValueFromAxisPrint("MINPOS", &iValidLow, &iValueLow);
+  }
+  if (status != asynSuccess) {
+    /* Communication problem, set everything to 0 */
+    iValueHigh = iValueLow = 0;
+   }
+#if 0
+  /* EthercatMCCHLMXX are info(asyn:READBACK,"1"),
+     so we must use pC_->setXXX(axisNo_..)  here */
+  pC_->setIntegerParam(axisNo_, pC_->EthercatMCCHLM_En_, iValueHigh);
+  pC_->setDoubleParam(axisNo_, pC_->EthercatMCCHLM_, fValueHigh);
+  pC_->setIntegerParam(axisNo_, pC_->EthercatMCCLLM_En_, iValueLow);
+  pC_->setDoubleParam(axisNo_, pC_->EthercatMCCLLM_, fValueLow);
+#endif
+  if (!iValidHigh || !iValidLow || iValueLow >= iValueHigh) {
+    iValueHigh = iValueLow = 0;
+  }
+
+  setDoubleParam(pC_->motorHighLimitRO_, iValueHigh);
+  setDoubleParam(pC_->motorLowLimitRO_, iValueLow);
+  return status;
+}
+
+asynStatus IcePAPAxis::initialUpdate(void)
+{
+  asynStatus status;
+
+  status = readBackSoftLimits();
+  if (!status) drvlocal.dirty.initialUpdate = 0;
+  return status;
+}
+
 
 /** Move the axis to a position, either absolute or relative
  * \param[in] position in mm
@@ -503,6 +588,11 @@ asynStatus IcePAPAxis::poll(bool *moving)
   int nvals = 10110;
   int motor_axis_no = 0;
 
+  if (drvlocal.dirty.initialUpdate) {
+    comStatus = initialUpdate();
+    if (comStatus) goto skip;
+  }
+
   *pC_->outString_ = '\0';
   *pC_->inString_ = '\0';
   memset(&st_axis_status, 0, sizeof(st_axis_status));
@@ -561,7 +651,7 @@ asynStatus IcePAPAxis::poll(bool *moving)
               status & STATUS_BIT_POWERON ?   "PWR-ON  " : "PWR-OFF ",
               status & STATUS_BIT_LIMIT_POS ? "LIM-P " : " ",
               status & STATUS_BIT_LIMIT_NEG ? "LIM-N " : " ",
-              status & STATUS_BIT_HSIGNAL ?   "HOME  " : " ",
+              status & STATUS_BIT_HSIGNAL ?   "HOME  " : "      ",
               hasEncoder ? "REP" : "RMP",
               hasEncoder ? encPosition : st_axis_status.motorPosition);
     drvlocal.lastpoll.status = st_axis_status.status;
@@ -600,6 +690,7 @@ asynStatus IcePAPAxis::poll(bool *moving)
   }
 
   callParamCallbacks();
+skip:
   return asynSuccess;
 
   badpollall:
