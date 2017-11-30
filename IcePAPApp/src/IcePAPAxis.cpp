@@ -81,6 +81,8 @@ IcePAPAxis::IcePAPAxis(IcePAPController *pC, int axisNo,
   if (axisFlags & AMPLIFIER_ON_FLAG_USING_CNEN) {
     setIntegerParam(pC->motorStatusGainSupport_, 1);
   }
+  setIntegerParam(pC_->motorFlagsHomeOnLs_, 1);
+  setIntegerParam(pC_->motorFlagsStopOnProblem_, 0);
   if (axisOptionsStr && axisOptionsStr[0]) {
     const char * const encoder_is_str = "encoder=";
 
@@ -510,7 +512,6 @@ asynStatus IcePAPAxis::initialUpdate(void)
 asynStatus IcePAPAxis::move(double position, int relative, double minVelocity, double maxVelocity, double acceleration)
 {
   asynStatus status = asynSuccess;
-  drvlocal.lastCommandIsHoming = 0;
   if (status == asynSuccess) status = stopAxisInternal(__FUNCTION__, 0);
   if (status == asynSuccess) status = setValueOnAxis("VELOCITY", (int)maxVelocity);
   if (status == asynSuccess) status = setValueOnAxis(relative ? "RMOVE" : "MOVE", (int)position);
@@ -530,7 +531,6 @@ asynStatus IcePAPAxis::move(double position, int relative, double minVelocity, d
 asynStatus IcePAPAxis::home(double minVelocity, double maxVelocity, double acceleration, int forwards)
 {
   asynStatus status = asynSuccess;
-  drvlocal.lastCommandIsHoming = 1;
   /* The controller will do the home search, and change its internal
      raw value to what we specified in fPosition. Use 0 */
   if (status == asynSuccess) status = stopAxisInternal(__FUNCTION__, 0);
@@ -551,7 +551,6 @@ asynStatus IcePAPAxis::home(double minVelocity, double maxVelocity, double accel
 asynStatus IcePAPAxis::moveVelocity(double minVelocity, double maxVelocity, double acceleration)
 {
   asynStatus status = asynSuccess;
-  drvlocal.lastCommandIsHoming = 0;
   if (status == asynSuccess) setValueOnAxis("JOG", (int)maxVelocity);
   readBackVelAcc();
   return status;
@@ -633,14 +632,8 @@ asynStatus IcePAPAxis::poll(bool *moving)
   if (axisNo_ != motor_axis_no) goto badpollall;
   setIntegerParam(pC_->motorStatusProblem_, 0); //st_axis_status.status & STATUS_BITS_DISABLE);
   setIntegerParam(pC_->motorStatusAtHome_, st_axis_status.status & STATUS_BIT_HSIGNAL);
-  if (drvlocal.lastCommandIsHoming) {
-    setIntegerParam(pC_->motorStatusLowLimit_, 0);
-    setIntegerParam(pC_->motorStatusHighLimit_, 0);
-  } else {
-    setIntegerParam(pC_->motorStatusLowLimit_, st_axis_status.status & STATUS_BIT_LIMIT_NEG);
-    setIntegerParam(pC_->motorStatusHighLimit_, st_axis_status.status & STATUS_BIT_LIMIT_POS);
-  }
-
+  setIntegerParam(pC_->motorStatusLowLimit_, st_axis_status.status & STATUS_BIT_LIMIT_NEG);
+  setIntegerParam(pC_->motorStatusHighLimit_, st_axis_status.status & STATUS_BIT_LIMIT_POS);
   setIntegerParam(pC_->motorStatusPowerOn_, st_axis_status.status & STATUS_BIT_POWERON);
 
   /* Phase 2: read the Axis (readback) position */

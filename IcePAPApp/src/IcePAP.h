@@ -58,7 +58,6 @@ private:
       const char *externalEncoderStr;
       int axisFlags;
     } cfg;
-    unsigned int lastCommandIsHoming;
     char errbuf[256];
   } drvlocal;
 
