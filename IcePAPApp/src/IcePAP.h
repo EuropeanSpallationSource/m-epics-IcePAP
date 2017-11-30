@@ -73,6 +73,7 @@ private:
   asynStatus getVconfigFromAxis(const char* var, int *valid, int *value);
   asynStatus getValueFromAxis(const char* var, double *value);
   asynStatus readBackVelAcc(void);
+  asynStatus readBackConfig(void);
   asynStatus readBackSoftLimits(void);
   asynStatus initialUpdate(void);
   asynStatus getFastValueFromAxis(const char* var, const char *extra, int *value);

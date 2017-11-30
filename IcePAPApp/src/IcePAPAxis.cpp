@@ -432,6 +432,25 @@ asynStatus IcePAPAxis::readBackVelAcc(void)
 }
 
 
+asynStatus IcePAPAxis::readBackConfig(void)
+{
+  asynStatus status = asynSuccess;
+  int velocity = 0, jvel = 0, acctime = 0;
+  status = getValueFromAxis("VELOCITY", &velocity);
+  if (status == asynSuccess) setDoubleParam(pC_->motorDefVelocityRO_, velocity);
+
+  status = getValueFromAxis("JOG", &jvel);
+  if (status == asynSuccess) setDoubleParam(pC_->motorDefJogVeloRO_, jvel);
+
+  status = getValueFromAxis("ACCTIME", &acctime);
+  if ((status == asynSuccess) && acctime) setDoubleParam(pC_->motorDefJogAccRO_, velocity/ acctime);
+  asynPrint(pC_->pasynUserController_, ASYN_TRACE_INFO,
+            "(%d) readBackConfig() velocity=%d jvel=%d acctime=%d\n",
+            axisNo_, velocity, jvel, acctime);
+
+  return status;
+}
+
 asynStatus IcePAPAxis::readBackSoftLimits(void)
 {
   asynStatus status;
@@ -469,6 +488,8 @@ asynStatus IcePAPAxis::initialUpdate(void)
   asynStatus status;
 
   status = readBackSoftLimits();
+  if (status == asynSuccess) readBackConfig();
+
   if (!status) drvlocal.dirty.initialUpdate = 0;
   return status;
 }
