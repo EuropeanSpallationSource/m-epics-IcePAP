@@ -15,6 +15,7 @@ FILENAME...   IcePAP.h
 #define EthercatMCVel_RBString               "Vel-RB"
 #define EthercatMCAcc_RBString               "Acc-RB"
 #define EthercatMCDec_RBString               "Dec-RB"
+#define EthercatMCScalRDBD_RBString          "SCALRDBD-RB"
 #define EthercatMCCHLMString                 "ECHLM"
 #define EthercatMCCLLMString                 "ECLLM"
 #define EthercatMCCHLM_EnString              "ECHLM-En"
@@ -112,6 +113,7 @@ public:
   int EthercatMCVel_RB_;
   int EthercatMCAcc_RB_;
   int EthercatMCDec_RB_;
+  int EthercatMCScalRDBD_RB_;
   int EthercatMCCHLM_;
   int EthercatMCCLLM_;
   int EthercatMCCHLM_En_;

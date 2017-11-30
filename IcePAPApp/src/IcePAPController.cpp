@@ -42,6 +42,7 @@ IcePAPController::IcePAPController(const char *portName, const char *MotorPortNa
   createParam(EthercatMCVel_RBString,        asynParamFloat64,     &EthercatMCVel_RB_);
   createParam(EthercatMCAcc_RBString,        asynParamFloat64,     &EthercatMCAcc_RB_);
   createParam(EthercatMCDec_RBString,        asynParamFloat64,     &EthercatMCDec_RB_);
+  createParam(EthercatMCScalRDBD_RBString,   asynParamFloat64,     &EthercatMCScalRDBD_RB_);
 
   createParam(EthercatMCCHLMString,          asynParamFloat64,     &EthercatMCCHLM_);
   createParam(EthercatMCCLLMString,          asynParamFloat64,     &EthercatMCCLLM_);

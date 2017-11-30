@@ -96,7 +96,7 @@ export MOTORIP MOTORPORT
     }
     rm -fv  require.lock* &&
     chmod +x $stcmddst &&
-    cmd=$(echo iocsh $stcmddst) &&
+    cmd=$(echo iocsh  -c "'"var requireDebug 2"'" $stcmddst) &&
     echo PWD=$PWD cmd=$cmd &&
     eval $cmd
   else

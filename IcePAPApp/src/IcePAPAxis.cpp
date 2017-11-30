@@ -436,6 +436,7 @@ asynStatus IcePAPAxis::readBackConfig(void)
 {
   asynStatus status = asynSuccess;
   int velocity = 0, jvel = 0, acctime = 0;
+  int iValidDBD = 0, iValueDBD = 0;
   status = getValueFromAxis("VELOCITY", &velocity);
   if (status == asynSuccess) setDoubleParam(pC_->motorDefVelocityRO_, velocity);
 
@@ -447,7 +448,10 @@ asynStatus IcePAPAxis::readBackConfig(void)
   asynPrint(pC_->pasynUserController_, ASYN_TRACE_INFO,
             "(%d) readBackConfig() velocity=%d jvel=%d acctime=%d\n",
             axisNo_, velocity, jvel, acctime);
-
+  status = getVconfigFromAxis("DEADBAND", &iValidDBD, &iValueDBD);
+  if ((status == asynSuccess && iValidDBD && iValueDBD)) {
+    setDoubleParam(pC_->motorRDBDRO_, iValueDBD);
+  }
   return status;
 }
 
