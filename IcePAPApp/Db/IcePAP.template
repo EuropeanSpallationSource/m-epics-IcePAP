@@ -83,7 +83,7 @@ record(ai, "$(PREFIX)$(R)Dec-RB")
 record(ai,"$(PREFIX)$(R)ECHLM-RB") {
     field(DESC, "EC High Soft Limit RB")
     field(DTYP, "asynFloat64")
-    field(PREC,"$(PREC)")
+    field(PREC,0)
     field(INP,"@asyn($(MOTOR_PORT),$(AXIS_NO))ECHLM")
     field(SCAN, "I/O Intr")
 }
@@ -91,7 +91,7 @@ record(ai,"$(PREFIX)$(R)ECHLM-RB") {
 record(ai,"$(PREFIX)$(R)ECLLM-RB") {
     field(DESC, "EC Low Soft Limit RB")
     field(DTYP, "asynFloat64")
-    field(PREC,"$(PREC)")
+    field(PREC,0)
     field(INP,"@asyn($(MOTOR_PORT),$(AXIS_NO))ECLLM")
     field(SCAN, "I/O Intr")
 }
