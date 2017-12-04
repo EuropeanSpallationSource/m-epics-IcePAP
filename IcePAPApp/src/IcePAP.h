@@ -94,6 +94,7 @@ public:
   void report(FILE *fp, int level);
   asynStatus writeReadOnErrorDisconnect(void);
   asynStatus writeOnErrorDisconnect(void);
+  asynStatus getConfigFromAxis(int axisNo, const char* var, char *buf, size_t buflen);
 
   IcePAPAxis* getAxis(asynUser *pasynUser);
   IcePAPAxis* getAxis(int axisNo);

@@ -492,7 +492,13 @@ asynStatus IcePAPAxis::readBackSoftLimits(void)
 asynStatus IcePAPAxis::initialUpdate(void)
 {
   asynStatus status;
+  char long_in_string[4096];
 
+  //status = getConfigFromAxis("CFG", &long_in_string, sizeof(long_in_string));
+  status = pC_->getConfigFromAxis(axisNo_, "VCONFIG MAXPOS",
+                                  &long_in_string[0], sizeof(long_in_string));
+  
+  
   status = readBackSoftLimits();
   if (status == asynSuccess) readBackConfig();
 

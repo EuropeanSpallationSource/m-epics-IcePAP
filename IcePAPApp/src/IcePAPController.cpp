@@ -154,6 +154,45 @@ asynStatus IcePAPController::writeOnErrorDisconnect(void)
   return status;
 }
 
+/** Gets the whole config from an axis
+ * \param[in] name of the variable to be retrieved
+ * \param[in] pointer to the string result
+ *
+ */
+asynStatus IcePAPController::getConfigFromAxis(int axisNo, const char* var,
+                                               char *buf, size_t buflen)
+{
+  memset(buf, 0, buflen);
+  sprintf(outString_, "%d:?%s", axisNo, var);
+
+  char old_InputEos[10];
+  int old_InputEosLen = 0;
+  size_t nwrite = 0;
+  asynStatus status;
+  int eomReason = 0;
+  size_t outlen = strlen(outString_);
+  size_t nread = 0;
+
+  status = pasynOctetSyncIO->getInputEos(pasynUserController_,
+                                         &old_InputEos[0],
+                                         (int)sizeof(old_InputEos),
+                                         &old_InputEosLen);
+  /*
+    static asynStatus getInputEos(asynUser *pasynUser,
+                                  char *eos, int eossize, int *eoslen);
+    static asynStatus setInputEos(asynUser *pasynUser,
+                                  const char *eos,int eoslen);
+  */
+  
+  status = pasynOctetSyncIO->writeRead(pasynUserController_, outString_, outlen,
+                                       buf, buflen,
+                                       DEFAULT_CONTROLLER_TIMEOUT,
+                                       &nwrite, &nread, &eomReason);
+
+  
+  return status;
+}
+
 void IcePAPController::handleStatusChange(asynStatus status)
 {
   int i;
