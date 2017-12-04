@@ -495,7 +495,7 @@ asynStatus IcePAPAxis::initialUpdate(void)
   char long_in_string[4096];
 
   //status = getConfigFromAxis("CFG", &long_in_string, sizeof(long_in_string));
-  status = pC_->getConfigFromAxis(axisNo_, "VCONFIG MAXPOS",
+  status = pC_->getConfigFromAxis(axisNo_, "CFG",
                                   &long_in_string[0], sizeof(long_in_string));
   
   

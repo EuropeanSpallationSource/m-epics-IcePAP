@@ -162,16 +162,17 @@ asynStatus IcePAPController::writeOnErrorDisconnect(void)
 asynStatus IcePAPController::getConfigFromAxis(int axisNo, const char* var,
                                                char *buf, size_t buflen)
 {
-  memset(buf, 0, buflen);
-  sprintf(outString_, "%d:?%s", axisNo, var);
-
   char old_InputEos[10];
   int old_InputEosLen = 0;
   size_t nwrite = 0;
   asynStatus status;
   int eomReason = 0;
-  size_t outlen = strlen(outString_);
   size_t nread = 0;
+  const char *dollar_NL_EOS_str = "$\n";
+  memset(buf, 0, buflen);
+  sprintf(outString_, "%d:?%s", axisNo, var);
+
+  size_t outlen = strlen(outString_);
 
   status = pasynOctetSyncIO->getInputEos(pasynUserController_,
                                          &old_InputEos[0],
@@ -183,12 +184,17 @@ asynStatus IcePAPController::getConfigFromAxis(int axisNo, const char* var,
     static asynStatus setInputEos(asynUser *pasynUser,
                                   const char *eos,int eoslen);
   */
+  status = pasynOctetSyncIO->setInputEos(pasynUserController_,
+                                         dollar_NL_EOS_str,
+                                         (int)strlen(dollar_NL_EOS_str));
   
   status = pasynOctetSyncIO->writeRead(pasynUserController_, outString_, outlen,
                                        buf, buflen,
                                        DEFAULT_CONTROLLER_TIMEOUT,
                                        &nwrite, &nread, &eomReason);
 
+  (void)pasynOctetSyncIO->setInputEos(pasynUserController_,
+                                      old_InputEos, old_InputEosLen);
   
   return status;
 }
