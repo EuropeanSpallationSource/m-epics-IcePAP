@@ -493,12 +493,25 @@ asynStatus IcePAPAxis::initialUpdate(void)
 {
   asynStatus status;
   char long_in_string[4096];
+  const char *start;
+  char       *end;
 
   //status = getConfigFromAxis("CFG", &long_in_string, sizeof(long_in_string));
   status = pC_->getConfigFromAxis(axisNo_, "CFG",
                                   &long_in_string[0], sizeof(long_in_string));
-  
-  
+  start = end = &long_in_string[0];
+  while (end) {
+     end = (char*)strchr(start, '\r');
+     if (end) {
+       *end = 0;
+       if (start[0] == '\n') start++; /* Jump over newline */
+       asynPrint(pC_->pasynUserController_, ASYN_TRACE_INFO,
+                 "CFG(%d) (%s)\n",  axisNo_, start);
+
+      start = &end[1]; /* Jump over '\r' */
+    }
+  }
+    
   status = readBackSoftLimits();
   if (status == asynSuccess) readBackConfig();
 
