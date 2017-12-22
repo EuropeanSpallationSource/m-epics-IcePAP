@@ -51,7 +51,7 @@ private:
   struct {
     st_axis_status_type lastpoll;
     struct {
-      unsigned int initialUpdate    :1;
+      unsigned int dummy   :1;
     }  dirty;
 
     struct {
@@ -75,7 +75,7 @@ private:
   asynStatus readBackVelAcc(void);
   asynStatus readBackConfig(void);
   asynStatus readBackSoftLimits(void);
-  asynStatus initialUpdate(void);
+  asynStatus initialPoll(void);
   asynStatus getFastValueFromAxis(const char* var, const char *extra, int *value);
 
   asynStatus resetAxis(void);

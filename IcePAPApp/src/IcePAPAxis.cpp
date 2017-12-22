@@ -489,7 +489,7 @@ asynStatus IcePAPAxis::readBackSoftLimits(void)
   return status;
 }
 
-asynStatus IcePAPAxis::initialUpdate(void)
+asynStatus IcePAPAxis::initialPoll(void)
 {
   asynStatus status;
   char long_in_string[4096];
@@ -515,7 +515,6 @@ asynStatus IcePAPAxis::initialUpdate(void)
   status = readBackSoftLimits();
   if (status == asynSuccess) readBackConfig();
 
-  if (!status) drvlocal.dirty.initialUpdate = 0;
   return status;
 }
 
@@ -630,11 +629,6 @@ asynStatus IcePAPAxis::poll(bool *moving)
   int nvals = 10110;
   int motor_axis_no = 0;
 
-  if (drvlocal.dirty.initialUpdate) {
-    comStatus = initialUpdate();
-    if (comStatus) goto skip;
-  }
-
   *pC_->outString_ = '\0';
   *pC_->inString_ = '\0';
   memset(&st_axis_status, 0, sizeof(st_axis_status));
@@ -726,7 +720,6 @@ asynStatus IcePAPAxis::poll(bool *moving)
   }
 
   callParamCallbacks();
-skip:
   return asynSuccess;
 
   badpollall:
