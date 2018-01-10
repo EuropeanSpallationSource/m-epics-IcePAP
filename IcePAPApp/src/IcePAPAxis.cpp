@@ -58,6 +58,8 @@
 
 const static char *const modulName = "IcePAPAxis::";
 
+#define NINT(f) (long)((f)>0 ? (f)+0.5 : (f)-0.5)       /* Nearest integer. */
+
 //
 // These are the IcePAPAxis methods
 //
@@ -731,6 +733,20 @@ asynStatus IcePAPAxis::poll(bool *moving)
   setIntegerParam(pC_->motorStatusProblem_, 1);
   callParamCallbacks();
   return asynError;
+}
+
+/**
+ * See asynMotorAxis::setPosition
+ */
+asynStatus IcePAPAxis::setPosition(double value)
+{
+  long steps = NINT(value);
+  asynStatus status;
+  asynPrint(pC_->pasynUserController_, ASYN_TRACE_INFO,
+            "%s setPosition(%d position=%g steps=%ld\n",
+	    modulName, axisNo_, value, steps);
+  status = setValueOnAxis("POS AXIS", (int)steps);
+  return status;
 }
 
 asynStatus IcePAPAxis::setIntegerParam(int function, int value)

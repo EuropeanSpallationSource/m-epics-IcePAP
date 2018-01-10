@@ -80,6 +80,7 @@ private:
 
   asynStatus resetAxis(void);
   asynStatus enableAmplifier(int);
+  asynStatus setPosition(double value);
   asynStatus setIntegerParam(int function, int value);
   asynStatus setStringParam(int function, const char *value);
   asynStatus stopAxisInternal(const char *function_name, double acceleration);
