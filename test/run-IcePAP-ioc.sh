@@ -32,7 +32,7 @@ MOTORCFG=".$1"
 export MOTORCFG
 echo MOTORCFG=$MOTORCFG
 (
-  cd startupIcePAP &&
+  cd startup &&
   if ! test -f st$MOTORCFG.cmd; then
     CMDS=$(echo st.*.cmd | sed -e "s/st\.//g" -e "s/\.cmd//g")
     #echo CMDS=$CMDS
@@ -72,21 +72,50 @@ export MOTORIP MOTORPORT
   envPathsdst=./envPaths.$EPICS_HOST_ARCH &&
   stcmddst=./st.cmd.$EPICS_HOST_ARCH &&
   mkdir -p  $IOCDIR/ &&
+  if test "x$EPICS_EEE" = "xn"; then
+    (cd ../../../axisCore && make install) && (cd .. && make install) || {
+      echo >&2 make install failed
+      exit 1
+    }
+  else
+    if sed -e "s/#.*//" <startup/st${MOTORCFG}.cmd |
+        grep "require *axisCore,.*[A-Za-z]"; then
+      (cd ../../../axisCore && make install) || {
+        echo >&2 make install failed
+        exit 1
+      }
+    fi &&
+    if sed -e "s/#.*//" <startup/st${MOTORCFG}.cmd |
+        grep "require *$APPXX,.*[A-Za-z]"; then
+      (cd .. && make install) || {
+        echo >&2 make install failed
+        exit 1
+      }
+    fi &&
+    if sed -e "s/#.*//" <../Makefile.EEE |
+        grep "USR_DEPENDENCIES.*axisCore,.*[A-Za-z]"; then
+      (cd .. && make install) || {
+        echo >&2 make install failed
+        exit 1
+      }
+    fi
+  fi &&
   cd $IOCDIR/ &&
   if test "x$EPICS_EEE" = "xy"; then
     #EEE
     stcmddst=./st.cmd.EEE.$EPICS_HOST_ARCH &&
     # We need to patch the cmd files to adjust "<"
     # All patched files are under IOCDIR=../iocBoot/ioc${APPXX}
-    for src in  ../../test/startupIcePAP/*cmd; do
+    #for src in  ../../test/startup/*cmd ../../test/startup/*cfg; do
+    for src in  ../../test/startup/*cmd ; do
       dst=${src##*/}
       echo cp PWD=$PWD src=$src dst=$dst
       cp "$src" "$dst"
     done &&
     rm -f $stcmddst &&
     sed  <st${MOTORCFG}.cmd  \
-      -e "s/require axisCore,USER/require axis,$USER/" \
-      -e "s/require IcePAP,USER/require IcePAP,$USER/" \
+      -e "s/require axisCore,USER/require axisCore,$USER/" \
+      -e "s/require $APPXX,USER/require $APPXX,$USER/" \
       -e "s/^cd /#cd /" \
       -e "s/127.0.0.1/$MOTORIP/" \
       -e "s/5000/$MOTORPORT/" |
@@ -103,7 +132,7 @@ export MOTORIP MOTORPORT
     # classic EPICS, non EEE
     # We need to patch the cmd files to adjust dbLoadRecords
     # All patched files are under IOCDIR=../iocBoot/ioc${APPXX}
-    for src in  ../../test/startupIcePAP/*cmd; do
+    for src in  ../../test/startup/*cmd; do
       dst=${src##*/}
       echo sed PWD=$PWD src=$src dst=$dst
       sed <"$src" >"$dst" \
@@ -123,12 +152,12 @@ dbLoadDatabase "dbd/${APPXX}.dbd"
 ${APPXX}_registerRecordDeviceDriver pdbbase
 EOF
    # Side note: st${MOTORCFG}.cmd needs extra patching
-   echo sed PWD=$PWD "<../../test/startupIcePAP/st${MOTORCFG}.cmd >>$stcmddst"
-   sed <../../test/startupIcePAP/st${MOTORCFG}.cmd  \
+   echo sed PWD=$PWD "<../../test/startup/st${MOTORCFG}.cmd >>$stcmddst"
+   sed <../../test/startup/st${MOTORCFG}.cmd  \
       -e "s/__EPICS_HOST_ARCH/$EPICS_HOST_ARCH/" \
       -e "s/127.0.0.1/$MOTORIP/" \
       -e "s/5000/$MOTORPORT/" \
-      -e "s%cfgFile=./%cfgFile=./startupIcePAP/%"    \
+      -e "s%cfgFile=./%cfgFile=./startup/%"    \
       -e "s%< %< ${TOP}/iocBoot/ioc${APPXX}/%"    \
       -e "s%require%#require%" \
       | grep -v '^  *#' >>$stcmddst &&

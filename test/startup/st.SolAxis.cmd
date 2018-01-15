@@ -1,5 +1,4 @@
 require asyn,4.31
-require axisCore,10.2.0
 require IcePAP,USER
 
 epicsEnvSet("MOTOR_PORT",    "$(SM_MOTOR_PORT=MCU1)")
